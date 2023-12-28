@@ -1,23 +1,19 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build-env
-
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
 WORKDIR /Blazor
-
-COPY *.csproj ./
-RUN dotnet restore
-
-COPY . ./
-
-RUN dotnet add package Newtonsoft.Json --version 13.0.3
-
-RUN dotnet build -c Release -o out
-
-RUN dotnet publish -c Release -o out
-
-FROM mcr.microsoft.com/dotnet/aspnet:7.0
-WORKDIR /Blazor
-COPY --from=build-env /Blazor/out .
-
 EXPOSE 8081
-ENV ASPNETCORE_URLS=http://*:8081
+EXPOSE 443
 
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+WORKDIR /src
+COPY ["Blazor.csproj", "."]
+RUN dotnet restore "Blazor.csproj"
+COPY . .
+RUN dotnet build "Blazor.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "Blazor.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Blazor.dll"]
