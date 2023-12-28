@@ -1,6 +1,7 @@
 version: '3.4'
 
 services:
+  # async message bus
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: 'rabbitmq'
@@ -13,23 +14,21 @@ services:
     networks:
       - rabbitmq_go_net
   
-  # websend:
-  #   restart: on-failure
-  #   build: ./WebAppSend
-  #   container_name: 'websend'
-  #   ports:
-  #     - "8081:8081"
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - ASPNETCORE_URLS=http://+:8081
-  #     - DATABASE_CONNECTION_STRING=Host=database;Port=5432;Database=your_database_name;User Id=your_username;Password=your_password
-  #   volumes:
-  #     - ~/.aspnet/https:/https:ro
-  #   depends_on:
-  #     - database
-  #     - rabbitmq
-  #   networks:
-  #     - rabbitmq_go_net
+  blazor:
+    restart: on-failure
+    build: ./Blazor
+    container_name: 'blazor'
+    ports:
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8081
+    volumes:
+      - ~/.aspnet/https:/https:ro
+    depends_on:
+      - rabbitmq
+    networks:
+      - rabbitmq_go_net
 
   # webreceive:
   #   restart: on-failure
