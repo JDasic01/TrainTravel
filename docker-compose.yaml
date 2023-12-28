@@ -30,36 +30,36 @@ services:
     networks:
       - rabbitmq_go_net
 
-  # webreceive:
-  #   restart: on-failure
-  #   build: ./WebAppReceive
-  #   ports:
-  #     - "8082:8082"
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - ASPNETCORE_URLS=http://+:8082
-  #     - DATABASE_CONNECTION_STRING=Host=database;Port=5432;Database=your_database_name;User Id=your_username;Password=your_password
-  #   volumes:
-  #     - ~/.aspnet/https:/https:ro
-  #   depends_on:
-  #     - database
-  #     - rabbitmq
-  #   networks:
-  #     - rabbitmq_go_net
+  api:
+    restart: on-failure
+    build: ./API
+    ports:
+      - "8082:8082"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8082
+      - DATABASE_CONNECTION_STRING=Host=database;Port=5432;Database=your_database_name;User Id=your_username;Password=your_password
+    volumes:
+      - ~/.aspnet/https:/https:ro
+    depends_on:
+      - database
+      - rabbitmq
+    networks:
+      - rabbitmq_go_net
 
-  # database:
-  #   image: postgres:latest
-  #   restart: always
-  #   environment:
-  #     POSTGRES_USER: your_username
-  #     POSTGRES_PASSWORD: your_password
-  #     POSTGRES_DB: your_database_name
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - ./pg_data:/var/lib/postgresql/data
-  #   networks:
-  #     - rabbitmq_go_net
+  database:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: your_username
+      POSTGRES_PASSWORD: your_password
+      POSTGRES_DB: your_database_name
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    networks:
+      - rabbitmq_go_net
 
 networks:
   rabbitmq_go_net:
