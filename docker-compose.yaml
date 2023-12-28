@@ -1,0 +1,67 @@
+version: '3.4'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+      - rabbitmq_go_net
+  
+  # websend:
+  #   restart: on-failure
+  #   build: ./WebAppSend
+  #   container_name: 'websend'
+  #   ports:
+  #     - "8081:8081"
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - ASPNETCORE_URLS=http://+:8081
+  #     - DATABASE_CONNECTION_STRING=Host=database;Port=5432;Database=your_database_name;User Id=your_username;Password=your_password
+  #   volumes:
+  #     - ~/.aspnet/https:/https:ro
+  #   depends_on:
+  #     - database
+  #     - rabbitmq
+  #   networks:
+  #     - rabbitmq_go_net
+
+  # webreceive:
+  #   restart: on-failure
+  #   build: ./WebAppReceive
+  #   ports:
+  #     - "8082:8082"
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - ASPNETCORE_URLS=http://+:8082
+  #     - DATABASE_CONNECTION_STRING=Host=database;Port=5432;Database=your_database_name;User Id=your_username;Password=your_password
+  #   volumes:
+  #     - ~/.aspnet/https:/https:ro
+  #   depends_on:
+  #     - database
+  #     - rabbitmq
+  #   networks:
+  #     - rabbitmq_go_net
+
+  # database:
+  #   image: postgres:latest
+  #   restart: always
+  #   environment:
+  #     POSTGRES_USER: your_username
+  #     POSTGRES_PASSWORD: your_password
+  #     POSTGRES_DB: your_database_name
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - ./pg_data:/var/lib/postgresql/data
+  #   networks:
+  #     - rabbitmq_go_net
+
+networks:
+  rabbitmq_go_net:
+    driver: bridge
