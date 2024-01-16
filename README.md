@@ -6,7 +6,7 @@ docker compose up
 **Endpoints**
 Blazor - localhost:8081
 API - localhost:8082
-- for development localhost:8082/swagger
+- for development UI -> localhost:8082/swagger
 
 **Check DB for tables**
 ```
