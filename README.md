@@ -15,3 +15,4 @@ CityA,CityB,100
 CityA,CityC,150
 CityB,CityC,75
 ```
+mislim da nece radit migracije jos
