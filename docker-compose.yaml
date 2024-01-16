@@ -33,6 +33,7 @@ services:
   api:
     restart: on-failure
     build: ./API
+    container_name: 'api'
     ports:
       - "8082:8082"
     environment:
@@ -48,16 +49,11 @@ services:
       - rabbitmq_go_net
 
   database:
-    image: postgres:latest
+    build: ./postgres
+    container_name: 'database'
     restart: always
-    environment:
-      POSTGRES_USER: your_username
-      POSTGRES_PASSWORD: your_password
-      POSTGRES_DB: your_database_name
     ports:
       - "5432:5432"
-    volumes:
-      - ./pg_data:/var/lib/postgresql/data
     networks:
       - rabbitmq_go_net
 
