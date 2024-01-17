@@ -1,4 +1,4 @@
-namespace API.Models;
+namespace Blazor.Data;
 
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
