@@ -1,3 +1,11 @@
+Ako treba dropat bazu, cak mislim da nece iz nekog razloga se brisu podaci nekad(ovo je lose treba ispravit).
+```
+docker compose exec database psql -U myuser -d mydatabase
+mydatabase=# 
+mydatabase=# DELETE FROM cityroutes;
+mydatabase=# DELETE FROM routes;
+mydatabase=# DELETE FROM cities;
+```
 City upload radi, route upload radi. Nece relaciju izmedu. Kod uploada routes treba se povezat sa city routes. Kreiranje rute updatea start i end city, kreiranje city samo dodaje u bazu. Zasad treba frontend forma za dodavanje rute.
 
 
