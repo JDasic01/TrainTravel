@@ -1,0 +1,145 @@
+﻿@page "/upload"
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using System.Net.Http.Headers;
+@using Blazor.Data;
+
+<PageTitle>CSV Upload</PageTitle>
+
+<h1>CSV Upload</h1>
+
+<p role="status">Status: @dataDeleted</p>
+<button @onclick="DeleteAllData" disabled="@(!CanResetDatabase)">Reset database</button>
+
+<p>Upload cities</p>
+<p role="status">Status: @uploadCityStatus</p>
+<InputFile OnChange="HandleCityFileUpload" disabled="@(!CanUploadCities)"/>
+<button class="btn btn-primary" @onclick="SubmitCities" disabled="@(!CanUploadCities)">Submit</button>
+
+<p>Upload routes</p>
+<p role="status">Status: @uploadRouteStatus</p>
+<InputFile OnChange="HandleRouteFileUpload" disabled="@(!CanUploadRoutes)"/>
+<button class="btn btn-primary" @onclick="SubmitRoutes" disabled="@(!CanUploadRoutes)">Submit</button>
+
+@code {
+    private bool CanResetDatabase => cities.Length != 0 || routes.Length != 0;
+    private bool CanUploadCities => cities.Length == 0;
+    private bool CanUploadRoutes => routes.Length == 0;
+
+    private string dataDeleted = "";
+
+    private string uploadCityStatus = "";
+    private IBrowserFile selectedCityFile;
+
+    private string uploadRouteStatus = "";
+    private IBrowserFile selectedRouteFile;
+
+    private City[] cities = new City[0];
+    private Blazor.Data.Route[] routes = new Blazor.Data.Route[0];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
+        routes = await HttpClient.GetFromJsonAsync<Blazor.Data.Route?[]>("http://api:8082/Route");
+    }
+
+    private async Task DeleteAllData()
+    {
+        var response = await HttpClient.PostAsync("http://api:8082/csv-file-upload/delete-data", null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            dataDeleted = "Data deleted successfully.";
+            await LoadData(); 
+        }
+        else
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            dataDeleted = $"Error deleting data.";
+            Console.WriteLine(errorMessage);
+        }
+    }
+
+    private async Task HandleCityFileUpload(InputFileChangeEventArgs e)
+    {
+        selectedCityFile = e.File;
+
+        if (selectedCityFile != null)
+        {
+            uploadCityStatus = $"Selected file: {selectedCityFile.Name}";
+        }
+    }
+
+    private async Task HandleRouteFileUpload(InputFileChangeEventArgs e)
+    {
+        selectedRouteFile = e.File;
+
+        if (selectedRouteFile != null)
+        {
+            uploadRouteStatus = $"Selected file: {selectedRouteFile.Name}";
+        }
+    }
+
+    private async Task SubmitCities()
+    {
+        if (selectedCityFile != null)
+        {
+            using (var content = new MultipartFormDataContent())
+            {
+                content.Add(new StreamContent(selectedCityFile.OpenReadStream()), "formFile", selectedCityFile.Name);
+
+                var response = await HttpClient.PostAsync("http://api:8082/csv-file-upload/upload-cities", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    uploadCityStatus = "CSV file uploaded successfully.";
+                    await LoadData(); 
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    uploadCityStatus = $"Error uploading CSV file. Status code: {response.StatusCode}. Error Message: {errorMessage}";
+                    Console.WriteLine(errorMessage);
+                }
+            }
+        }
+        else
+        {
+            uploadCityStatus = "Please select a file before submitting.";
+        }
+    }
+
+    private async Task SubmitRoutes()
+    {
+        if (selectedRouteFile != null)
+        {
+            using (var content = new MultipartFormDataContent())
+            {
+                content.Add(new StreamContent(selectedRouteFile.OpenReadStream()), "formFile", selectedRouteFile.Name);
+
+                var response = await HttpClient.PostAsync("http://api:8082/csv-file-upload/upload-routes", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    uploadRouteStatus = "CSV file uploaded successfully.";
+                    await LoadData(); 
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    uploadRouteStatus = $"Error uploading CSV file. Status code: {response.StatusCode}. Error Message: {errorMessage}";
+                    Console.WriteLine(errorMessage);
+                }
+            }
+        }
+        else
+        {
+            uploadRouteStatus = "Please select a file before submitting.";
+        }
+    }
+}

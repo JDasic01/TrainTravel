@@ -22,6 +22,7 @@ RUN dotnet add package Newtonsoft.Json --version 13.0.3
 RUN dotnet add package Microsoft.EntityFrameworkCore --version 7.0.8
 RUN dotnet add package Microsoft.EntityFrameworkCore.Design --version 7.0.8
 RUN dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL --version 7.0.0
+RUN dotnet add package CsvHelper --version 27.1.1
 
 # Build the application
 RUN dotnet build -c Release -o out

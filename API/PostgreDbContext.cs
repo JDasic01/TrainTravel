@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore; 
+using API.Models; 
 
 public class PostgreDbContext : DbContext
 {
-    public DbSet<City> Cities { get; set; }
-    public DbSet<Route> Routes { get; set; }
-    public DbSet<CityRoute> CityRoutes { get; set; }
+    public DbSet<City> cities { get; set; }
+    public DbSet<API.Models.Route> routes { get; set; }
+    public DbSet<CityRoute> cityroutes { get; set; }
 
     public PostgreDbContext(DbContextOptions<PostgreDbContext> options) : base(options)
     {
@@ -13,16 +14,18 @@ public class PostgreDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<CityRoute>()
-            .HasKey(cr => new { cr.CityId, cr.RouteId });
+            .HasKey(cr => new { cr.city_id, cr.route_id });
 
-        modelBuilder.Entity<CityRoute>()
-            .HasOne(cr => cr.City)
-            .WithMany(c => c.CityRoutes)
-            .HasForeignKey(cr => cr.CityId);
+        modelBuilder.Entity<API.Models.Route>()
+            .HasOne(r => r.StartCity)
+            .WithMany()
+            .HasForeignKey(r => r.start_city_id)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<CityRoute>()
-            .HasOne(cr => cr.Route)
-            .WithMany(r => r.CityRoutes)
-            .HasForeignKey(cr => cr.RouteId);
+        modelBuilder.Entity<API.Models.Route>()
+            .HasOne(r => r.EndCity)
+            .WithMany()
+            .HasForeignKey(r => r.end_city_id)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

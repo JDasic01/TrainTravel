@@ -1,4 +1,4 @@
-namespace API.Models;
+namespace Blazor.Data;
 
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -13,7 +13,8 @@ public class Route
     public int start_city_id { get; set; }
     [ForeignKey("EndCity")]
     public int end_city_id { get; set; }
-    
+    public ICollection<CityRoute> city_routes { get; set; }
+
     public City StartCity { get; set; }
     public City EndCity { get; set; }
 }
