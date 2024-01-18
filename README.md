@@ -1,3 +1,7 @@
+City upload radi, route upload radi. Nece relaciju izmedu. Kod uploada routes treba se povezat sa city routes. Kreiranje rute updatea start i end city, kreiranje city samo dodaje u bazu. Zasad treba frontend forma za dodavanje rute.
+
+
+
 **Starting the project**
 ```
 docker compose build --no-cache
