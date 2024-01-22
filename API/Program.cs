@@ -10,6 +10,8 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<PostgreDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreDatabaseConnection")));
 
+builder.Services.Configure<Neo4jService>(builder.Configuration.GetConnectionString("NeO4jConnectionSettings"));
+
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
