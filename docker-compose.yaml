@@ -43,17 +43,28 @@ services:
     volumes:
       - ~/.aspnet/https:/https:ro
     depends_on:
-      - database
+      - graphdb
+      - relation
       - rabbitmq
     networks:
       - rabbitmq_go_net
 
-  database:
+  relation:
     build: ./postgres
-    container_name: 'database'
+    container_name: 'relation'
     restart: always
     ports:
       - "5432:5432"
+    networks:
+      - rabbitmq_go_net
+
+  graphdb:
+    build: ./neo4js
+    container_name: 'database'
+    restart: always
+    ports:
+      - 7474:7474
+      - 7687:7687
     networks:
       - rabbitmq_go_net
 
