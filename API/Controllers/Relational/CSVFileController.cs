@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using API.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace API.Controllers
+namespace API.Controllers.Relational
 {
     [ApiController]
     [Route("csv-file-upload")]

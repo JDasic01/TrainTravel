@@ -23,7 +23,7 @@ RUN dotnet add package Microsoft.EntityFrameworkCore --version 7.0.8
 RUN dotnet add package Microsoft.EntityFrameworkCore.Design --version 7.0.8
 RUN dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL --version 7.0.0
 RUN dotnet add package CsvHelper --version 27.1.1
-RUN dotnet add package Neo4jClient --version 4.1.1
+RUN dotnet add package Neo4jClient --version 4.1.0.49
 
 # Build the application
 RUN dotnet build -c Release -o out
