@@ -32,17 +32,25 @@ namespace API.Controllers
                 {
                     var cityRecords = csv.GetRecords<CityCSVModel>();
                     foreach (var cityRecord in cityRecords)
+                    {
+                        var city = new City
                         {
-                            var city = new City
-                            {
-                                city_id = cityRecord.city_id,
-                                city_name = cityRecord.city_name,
-                                city_routes = new HashSet<CityRoute>()
-                            };
-                            await _client.Cypher.Create("(c:City $city)")
-                                                .WithParam("city", city)
+                            city_id = cityRecord.city_id,
+                            city_name = cityRecord.city_name,
+                            city_routes = new HashSet<CityRoute>(),
+                            city_to_city = new HashSet<CityToCity>()
+                        };
+                        //await _client.Cypher.Create("(c:City $city)")
+                        //                    .WithParam("city", city)
+                        //                    .ExecuteWithoutResultsAsync();
+
+                        // Doda ako ne postoji grad s tim Id-em
+                        await _client.Cypher.Merge("(c:City { city_id: {id} })")
+                                                .OnCreate()
+                                                .Set("c = {city}")
+                                                .WithParams(new {city_id = city.city_id, city})
                                                 .ExecuteWithoutResultsAsync();
-                        }  
+                    }  
                 }
 
                 return Ok("CSV file for cities uploaded successfully.");
@@ -119,6 +127,12 @@ namespace API.Controllers
         {
             try
             {
+                await _client.Cypher.OptionalMatch("(n)<-[r]-()")
+                                    .Delete("r, n")
+                                    .ExecuteWithoutResultsAsync();
+                await _client.Cypher.Match("(n)")
+                                    .Delete("n")
+                                    .ExecuteWithoutResultsAsync();
                 return Ok("All data deleted sucessfuly");
             }
             catch (Exception ex)
