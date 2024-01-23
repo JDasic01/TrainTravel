@@ -1,29 +1,21 @@
-using API.Models; 
-using Neo4jClient;
+using Neo4j.Driver;
 
-public class Neo4jService
+public class Neo4jService : IDisposable
 {
-    private readonly IGraphClient _graphClient;
+    private readonly IDriver _driver;
 
-    public Neo4jService(string neo4jUri, string neo4jUsername, string neo4jPassword)
+    public Neo4jService(string uri, string user, string password)
     {
-        _graphClient = new GraphClient(new Uri(neo4jUri), neo4jUsername, neo4jPassword);
-        _graphClient.Connect();
+        _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
     }
 
-    public void CreateCity(City city)
+    public IAsyncSession GetSession()
     {
-        _graphClient.Cypher
-            .Create("(c:City {newCity})")
-            .WithParam("newCity", city)
-            .ExecuteWithoutResults();
+        return _driver.AsyncSession();
     }
 
-    public IEnumerable<City> GetCities()
+    public void Dispose()
     {
-        return _graphClient.Cypher
-            .Match("(c:City)")
-            .Return<City>("c")
-            .Results;
+        _driver?.Dispose();
     }
 }

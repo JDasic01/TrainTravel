@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using CsvHelper;
-using System.Globalization;
-using System.IO;
+using Neo4jClient;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using API.Models;
 
@@ -12,101 +12,57 @@ namespace API.Controllers
     [Route("[controller]")]
     public class CityController : ControllerBase
     {
-        private readonly ILogger<CityController> _logger;
-        private readonly PostgreDbContext _dbContext; 
+        
+        private readonly IGraphClient _client;
 
-        public CityController(ILogger<CityController> logger, PostgreDbContext dbContext)
+        public CityController(IGraphClient client)
         {
-            _logger = logger;
-            _dbContext = dbContext;
+            _client = client;
         }
 
         [HttpGet]
-        public IActionResult GetCities()
-        {
-            var cities = _dbContext.cities.ToList();
-            return Ok(cities);
-        }
-        
-        [HttpGet("{city_id}")]
-        public IActionResult GetCityById(int city_id)
-        {
-            try
-            {
-                var city = _dbContext.cities.Find(city_id);
-                if (city == null)
-                {
-                    return NotFound("City not found.");
-                }
+        public async Task<IActionResult> Get(){
+             var Cities = await _client.Cypher.Match("(n: City)")
+                                                   .Return(n => n.As<City>()).ResultsAsync;
 
-                return Ok(city);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving city by ID.");
-                return StatusCode(500, "Internal server error");
-            }
+            return Ok(Cities);
         }
-        
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id){
+                var Cities = await _client.Cypher.Match("(c:City)")
+                                                    .Where((City c) => c.city_id == id)
+                                                    .Return(c => c.As<City>()).ResultsAsync;
+
+                return Ok(Cities.LastOrDefault());
+        }
+
         [HttpPost]
-        public async Task<IActionResult> CreateCity(City city)
-        {
-            try
-            {
-                _dbContext.cities.Add(city);
-                await _dbContext.SaveChangesAsync();
-                return Ok("City created successfully.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating city.");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-        
-        [HttpPut("{city_id}")]
-        public async Task<IActionResult> UpdateCity(int city_id, City updatedCity)
-        {
-            try
-            {
-                var existingCity = _dbContext.cities.Find(city_id);
-                if (existingCity == null)
-                {
-                    return NotFound("City not found.");
-                }
+        public async Task<IActionResult> Create([FromBody]City city){
+            await _client.Cypher.Create("(c:City $city)")
+                                .WithParam("city", city)
+                                .ExecuteWithoutResultsAsync();
 
-                existingCity.city_name = updatedCity.city_name;
-
-                await _dbContext.SaveChangesAsync();
-                return Ok("City updated successfully.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating city.");
-                return StatusCode(500, "Internal server error");
-            }
+                return Ok();
         }
 
-        [HttpDelete("{city_id}")]
-        public async Task<IActionResult> DeleteCity(int city_id)
-        {
-            try
-            {
-                var city = _dbContext.cities.Find(city_id);
-                if (city == null)
-                {
-                    return NotFound("City not found.");
-                }
-
-                _dbContext.cities.Remove(city);
-                await _dbContext.SaveChangesAsync();
-                return Ok("City deleted successfully.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting city.");
-                return StatusCode(500, "Internal server error");
-            }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody]City city){
+                await _client.Cypher.Match("(c:City)")
+                                    .Where((City c) => c.city_id == id)
+                                    .Set("c = $city")
+                                    .WithParam("city", city)
+                                    .ExecuteWithoutResultsAsync();
+            return Ok();
         }
-    }   
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id){
+                await  _client.Cypher.Match("(c:City)")
+                                    .Where((City c) => c.city_id == id)
+                                    .Delete("c")
+                                    .ExecuteWithoutResultsAsync();
+                return Ok();
+        }
+    }
 }

@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using CsvHelper;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using API.Models;
-using Microsoft.EntityFrameworkCore;
+using Neo4jClient;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace API.Controllers
 {
@@ -13,13 +15,11 @@ namespace API.Controllers
     [Route("csv-file-upload")]
     public class CSVFileController : ControllerBase
     {
-        private readonly ILogger<CSVFileController> _logger;
-        private readonly PostgreDbContext _dbContext; 
+        private readonly IGraphClient _client;
 
-        public CSVFileController(ILogger<CSVFileController> logger, PostgreDbContext dbContext)
+        public CSVFileController(IGraphClient client)
         {
-            _logger = logger;
-            _dbContext = dbContext;
+            _client = client;
         }
 
         [HttpPost("upload-cities", Name = "UploadCitiesCSV")]
@@ -39,16 +39,16 @@ namespace API.Controllers
                                 city_name = cityRecord.city_name,
                                 city_routes = new HashSet<CityRoute>()
                             };
-                            _dbContext.cities.Add(city);
-                        }
-                    await _dbContext.SaveChangesAsync();    
+                            await _client.Cypher.Create("(c:City $city)")
+                                                .WithParam("city", city)
+                                                .ExecuteWithoutResultsAsync();
+                        }  
                 }
 
                 return Ok("CSV file for cities uploaded successfully.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing CSV file.");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -72,41 +72,44 @@ namespace API.Controllers
                             end_city_id = routeRecord.end_city_id
                         };
                         
-                        _dbContext.routes.Add(route);
-                        await _dbContext.SaveChangesAsync();
-
-                        var startCity = _dbContext.cities.Find(routeRecord.start_city_id);
-                        var endCity = _dbContext.cities.Find(routeRecord.end_city_id);
+                        await _client.Cypher.Create("(r:Route $route)")
+                                            .WithParam("route", route)
+                                            .ExecuteWithoutResultsAsync();
                         
-                        if (startCity == null || endCity == null)
-                        {
-                            Console.WriteLine("Start city or end city not found. Skipping route creation.");
-                            continue; 
-                        }
+                        // start end city relation
+                        var start_city = (await _client.Cypher.Match("(c:City)")
+                                                .Where((City c) => c.city_id == routeRecord.start_city_id)
+                                                .Return(c => c.As<City>()).ResultsAsync)
+                                                .SingleOrDefault();
 
-                        var cityRoute = new CityRoute
-                        {
-                            city_id = startCity.city_id,
-                            route_id = route.route_id
-                        };
+                        var end_city = (await _client.Cypher.Match("(c:City)")
+                                            .Where((City c) => c.city_id == routeRecord.end_city_id)
+                                            .Return(c => c.As<City>()).ResultsAsync)
+                                            .SingleOrDefault();
+                        var startCityRoute = new CityRoute{city_id = routeRecord.start_city_id, route_id = routeRecord.route_id};
+                        var endCityRoute = new CityRoute{city_id = routeRecord.end_city_id, route_id = routeRecord.route_id};
+                        start_city.city_routes.Add(startCityRoute);
+                        end_city.city_routes.Add(endCityRoute);
 
-                        startCity.city_routes.Add(cityRoute);
-                        endCity.city_routes.Add(cityRoute);
 
-                        _dbContext.Entry(startCity).State = EntityState.Modified;
-                        _dbContext.Entry(endCity).State = EntityState.Modified;
+                        await _client.Cypher.Match("(c:City)")
+                                            .Where((City c) => c.city_id == routeRecord.start_city_id)
+                                            .Set("c = $city")
+                                            .WithParam("city", start_city)
+                                            .ExecuteWithoutResultsAsync();
 
-                        _dbContext.cityroutes.Add(cityRoute);
+                        await _client.Cypher.Match("(c:City)")
+                                            .Where((City c) => c.city_id == routeRecord.end_city_id)
+                                            .Set("c = $city")
+                                            .WithParam("city", end_city)
+                                            .ExecuteWithoutResultsAsync();
                     }
-
-                    await _dbContext.SaveChangesAsync();
                 }
 
                 return Ok("CSV file for routes uploaded successfully.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing CSV file.");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -116,15 +119,10 @@ namespace API.Controllers
         {
             try
             {
-                _dbContext.cityroutes.RemoveRange(_dbContext.cityroutes);
-                _dbContext.routes.RemoveRange(_dbContext.routes);
-                _dbContext.cities.RemoveRange(_dbContext.cities);
-                await _dbContext.SaveChangesAsync();    
                 return Ok("All data deleted sucessfuly");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting data.");
                 return StatusCode(500, "Internal server error");
             }
         }

@@ -1,5 +1,7 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection; 
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+using Neo4jClient;
+using Neo4j.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,9 +9,21 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-builder.Services.AddDbContext<PostgreDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreDatabaseConnection")));
+builder.Services.AddSingleton<Neo4jService>(provider =>
+{
+    var neo4jSettings = builder.Configuration.GetSection("Neo4jSettings").Get<Neo4jSettings>();
+    return new Neo4jService(neo4jSettings.Uri, neo4jSettings.Username, neo4jSettings.Password);
+});
 
+// Use Neo4jService to create the GraphClient and connect to Neo4j
+builder.Services.AddSingleton<IGraphClient>(provider =>
+{
+    var neo4jSettings = builder.Configuration.GetSection("Neo4jSettings").Get<Neo4jSettings>();
+    var neo4jService = provider.GetRequiredService<Neo4jService>();
+    var client = new BoltGraphClient(new Uri(neo4jSettings.Uri), neo4jSettings.Username, neo4jSettings.Password);
+    client.ConnectAsync().Wait(); // Wait for the connection to complete
+    return client;
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
