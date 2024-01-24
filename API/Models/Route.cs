@@ -16,4 +16,6 @@ public class Route
     
     public City StartCity { get; set; }
     public City EndCity { get; set; }
+
+    public ICollection<CityRoute> city_routes { get; set; } = new List<CityRoute>();
 }
