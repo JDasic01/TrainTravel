@@ -18,11 +18,13 @@ namespace API.Controllers
     {
         private readonly IGraphClient _client;
         private readonly ILogger<CSVFileController> _logger;
+        //private readonly Neo4jService _driver;
 
-        public CSVFileController(ILogger<CSVFileController> logger, IGraphClient client)
+        public CSVFileController(ILogger<CSVFileController> logger, IGraphClient client)//, Neo4jService driver)
         {
             _logger = logger;
             _client = client;
+            //_driver = driver;
         }
 
         [HttpPost("upload-cities", Name = "UploadCitiesCSV")]
@@ -61,6 +63,7 @@ namespace API.Controllers
         [HttpPost("upload-routes", Name = "UploadRoutesCSV")]
         public async Task<IActionResult> CreateRoutes(IFormFile formFile)
         {
+            //var session = _driver.GetSession("neo4j");
             try
             {
                 using (var reader = new StreamReader(formFile.OpenReadStream()))
@@ -77,15 +80,21 @@ namespace API.Controllers
                             end_city_id = routeRecord.end_city_id,
                             city_routes = null
                         };
-                        
+
                         await _client.Cypher.Create("(r:Route $route)")
                                             .WithParam("route", route)
                                             .ExecuteWithoutResultsAsync();
 
-                        await _client.Cypher.Match("(city:City), (route:Route)")
+                        //await session.RunAsync(
+                        //        "MATCH (c:City), (r:Route) " +
+                        //        $"WHERE c.city_id = {routeRecord.start_city_id} " +
+                        //        $"AND r.route_id = {routeRecord.route_id} " +
+                        //        "CREATE (c)-[:HAS_ROUTE]->(r)");
+
+                        await _client.Cypher.Match("(c:City), (r:Route)")
                                             .Where((City c) => c.city_id == routeRecord.start_city_id)
                                             .AndWhere((API.Models.Route r) => r.route_id == routeRecord.route_id)
-                                            .Create("city-[:HAS_ROUTE]->route")
+                                            .Create("(c)-[:HAS_ROUTE]->(r)")
                                             .ExecuteWithoutResultsAsync();
 
                         // start end city relation
@@ -133,6 +142,10 @@ namespace API.Controllers
                 _logger.LogError(ex, "Error creating routes.");
                 return StatusCode(500, "Internal server error");
             }
+            //finally
+            //{
+            //    await session.CloseAsync();
+            //}
         }
 
         [HttpPost("delete-data", Name = "DeleteDataFromDb")]
