@@ -91,10 +91,11 @@ namespace API.Controllers
                         //        $"AND r.route_id = {routeRecord.route_id} " +
                         //        "CREATE (c)-[:HAS_ROUTE]->(r)");
 
-                        await _client.Cypher.Match("(c:City), (r:Route)")
-                                            .Where((City c) => c.city_id == routeRecord.start_city_id)
+                        await _client.Cypher.Match("(c1:City)", "(c2:City)", "(r:Route)")
+                                            .Where((City c1) => c1.city_id == routeRecord.start_city_id)
+                                            .AndWhere((City c2) => c2.city_id == routeRecord.end_city_id)
                                             .AndWhere((API.Models.Route r) => r.route_id == routeRecord.route_id)
-                                            .Create("(c)-[:HAS_ROUTE]->(r)")
+                                            .Create("(c1)-[:HAS_ROUTE]->(r)<-[:HAS_ROUTE]-(c2)")
                                             .ExecuteWithoutResultsAsync();
 
                         // start end city relation
