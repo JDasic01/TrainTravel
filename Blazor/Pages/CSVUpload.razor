@@ -21,10 +21,16 @@
 <InputFile OnChange="HandleRouteFileUpload" disabled="@(!CanUploadRoutes)"/>
 <button class="btn btn-primary" @onclick="SubmitRoutes" disabled="@(!CanUploadRoutes)">Submit</button>
 
+<p>Upload city to city connections</p>
+<p role="status">Status: @uploadCTCStatus</p>
+<InputFile OnChange="HandleCTCFileUpload" disabled="@(!CanUploadCTC)"/>
+<button class="btn btn-primary" @onclick="SubmitCTC" disabled="@(!CanUploadCTC)">Submit</button>
+
 @code {
-    private bool CanResetDatabase => cities.Length != 0 || routes.Length != 0;
+    private bool CanResetDatabase => cities.Length != 0 || routes.Length != 0 || connections.Length == 0;
     private bool CanUploadCities => cities.Length == 0;
     private bool CanUploadRoutes => routes.Length == 0;
+    private bool CanUploadCTC => connections.Length == 0;
 
     private string dataDeleted = "";
 
@@ -34,8 +40,12 @@
     private string uploadRouteStatus = "";
     private IBrowserFile selectedRouteFile;
 
+    private string uploadCTCStatus = "";
+    private IBrowserFile selectedCTCFile;
+
     private City[] cities = new City[0];
     private Blazor.Data.Route[] routes = new Blazor.Data.Route[0];
+    private CityToCity[] connections = new CityToCity[0];
 
     protected override async Task OnInitializedAsync()
     {
@@ -46,6 +56,7 @@
     {
         cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
         routes = await HttpClient.GetFromJsonAsync<Blazor.Data.Route?[]>("http://api:8082/Route");
+        connections = await HttpClient.GetFromJsonAsync<CityToCity?[]>("http://api:8082/CityToCity");
     }
 
     private async Task DeleteAllData()
@@ -82,6 +93,16 @@
         if (selectedRouteFile != null)
         {
             uploadRouteStatus = $"Selected file: {selectedRouteFile.Name}";
+        }
+    }
+
+    private async Task HandleCTCFileUpload(InputFileChangeEventArgs e)
+    {
+        selectedCTCFile = e.File;
+
+        if (selectedCTCFile != null)
+        {
+            uploadCTCStatus = $"Selected file: {selectedCTCFile.Name}";
         }
     }
 
@@ -140,6 +161,35 @@
         else
         {
             uploadRouteStatus = "Please select a file before submitting.";
+        }
+    }
+
+    private async Task SubmitCTC()
+    {
+        if (selectedRouteFile != null)
+        {
+            using (var content = new MultipartFormDataContent())
+            {
+                content.Add(new StreamContent(selectedRouteFile.OpenReadStream()), "formFile", selectedRouteFile.Name);
+
+                var response = await HttpClient.PostAsync("http://api:8082/csv-file-upload/upload-city-connections", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    uploadCTCStatus = "CSV file uploaded successfully.";
+                    await LoadData(); 
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    uploadCTCStatus = $"Error uploading CSV file. Status code: {response.StatusCode}. Error Message: {errorMessage}";
+                    Console.WriteLine(errorMessage);
+                }
+            }
+        }
+        else
+        {
+            uploadCTCStatus = "Please select a file before submitting.";
         }
     }
 }
