@@ -1,6 +1,8 @@
+# Use the official Neo4j image
 FROM neo4j:latest
 
-WORKDIR /app
-COPY . /app
+# Create a directory for plugins
+WORKDIR /plugins
 
-EXPOSE 7474 7473 7687
+# Copy all files from the current directory to the plugins directory
+COPY . .

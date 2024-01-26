@@ -40,8 +40,8 @@ namespace API.Controllers
                         {
                             city_id = cityRecord.city_id,
                             city_name = cityRecord.city_name,
-                            city_routes = null, // new HashSet<CityRoute>(),
-                            city_to_city = null // new HashSet<CityToCity>()
+                            city_routes = null, 
+                            city_to_city = null 
                         };
                         await _client.Cypher.Create("(c:City $city)")
                                             .WithParam("city", city)
@@ -82,11 +82,13 @@ namespace API.Controllers
                                             .WithParam("route", route)
                                             .ExecuteWithoutResultsAsync();
 
+
                         await _client.Cypher.Match("(c:City), (r:Route)")
                                             .Where((City c) => c.city_id == routeRecord.start_city_id)
                                             .AndWhere((API.Models.Route r) => r.route_id == routeRecord.route_id)
-                                            .Create("(c)-[:HAS_ROUTE]->(r)")
+                                            .Create("(c1)-[:HAS_ROUTE]->(r)<-[:HAS_ROUTE]-(c2)")
                                             .ExecuteWithoutResultsAsync();
+
                     }
                 }
 

@@ -70,6 +70,18 @@ services:
     networks:
       - rabbitmq_go_net
 
+  redis:
+    image: redis:latest
+    container_name: 'redis'
+    ports:
+      - "6379:6379"
+    depends_on:
+      - graphdb
+      - relation
+      - rabbitmq
+    networks:
+      - rabbitmq_go_net
+
 networks:
   rabbitmq_go_net:
     driver: bridge
