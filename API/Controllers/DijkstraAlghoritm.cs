@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Neo4jClient;
 using Microsoft.AspNetCore.Mvc;
+using API.Services;
 
 namespace API.Controllers
 {
@@ -10,10 +11,12 @@ namespace API.Controllers
     public class DijkstraAlgorithm : ControllerBase
     {
         private readonly IGraphClient _client;
+        private readonly ICacheService _cacheService;
 
-        public DijkstraAlgorithm(IGraphClient client)
+        public DijkstraAlgorithm(IGraphClient client, ICacheService cacheService)
         {
             _client = client;
+            _cacheService = cacheService;
         }
 
         [HttpGet]

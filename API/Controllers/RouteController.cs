@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using API.Services;
 
 namespace API.Controllers
 {
@@ -13,10 +14,12 @@ namespace API.Controllers
     {
         
         private readonly IGraphClient _client;
-
-        public RouteController(IGraphClient client)
+        private readonly ICacheService _cacheService;
+        
+        public RouteController(IGraphClient client, ICacheService cacheService)
         {
             _client = client;
+            _cacheService = cacheService;
         }
 
         [HttpGet]

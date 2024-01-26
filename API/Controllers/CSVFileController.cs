@@ -9,6 +9,7 @@ using Neo4jClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using API.Services;
 
 namespace API.Controllers
 {
@@ -18,11 +19,15 @@ namespace API.Controllers
     {
         private readonly IGraphClient _client;
         private readonly ILogger<CSVFileController> _logger;
+        private readonly ICacheService _cacheService;
+        private readonly IMessageService _messageService;
 
-        public CSVFileController(ILogger<CSVFileController> logger, IGraphClient client)
+        public CSVFileController(ILogger<CSVFileController> logger, IGraphClient client, IMessageService messageService, ICacheService cacheService)
         {
             _logger = logger;
             _client = client;
+            _messageService = messageService;
+            _cacheService = cacheService;
         }
 
         [HttpPost("upload-cities", Name = "UploadCitiesCSV")]
