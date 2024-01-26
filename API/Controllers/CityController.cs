@@ -26,7 +26,7 @@ namespace API.Controllers
 
         [HttpGet]
         public async Task<IActionResult> Get(){
-             var Cities = await _client.Cypher.Match("(n: City)")
+            var Cities = await _client.Cypher.Match("(n: City)")
                                                    .Return(n => n.As<City>()).ResultsAsync;
 
             return Ok(Cities);
