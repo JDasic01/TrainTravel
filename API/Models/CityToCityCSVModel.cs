@@ -3,7 +3,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-public class CityToCity
+public class CityToCityCSVModel
 {
     [Key]
     public int city_id_1 { get; set; }

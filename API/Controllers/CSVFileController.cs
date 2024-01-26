@@ -19,7 +19,7 @@ namespace API.Controllers
         private readonly IGraphClient _client;
         private readonly ILogger<CSVFileController> _logger;
 
-        public CSVFileController(ILogger<CSVFileController> logger, IGraphClient client)//, Neo4jService driver)
+        public CSVFileController(ILogger<CSVFileController> logger, IGraphClient client)
         {
             _logger = logger;
             _client = client;
@@ -82,12 +82,13 @@ namespace API.Controllers
                                             .WithParam("route", route)
                                             .ExecuteWithoutResultsAsync();
 
-                        await _client.Cypher.Match("(c1:City)", "(c2:City)", "(r:Route)")
-                                            .Where((City c1) => c1.city_id == routeRecord.start_city_id)
-                                            .AndWhere((City c2) => c2.city_id == routeRecord.end_city_id)
+
+                        await _client.Cypher.Match("(c:City), (r:Route)")
+                                            .Where((City c) => c.city_id == routeRecord.start_city_id)
                                             .AndWhere((API.Models.Route r) => r.route_id == routeRecord.route_id)
                                             .Create("(c1)-[:HAS_ROUTE]->(r)<-[:HAS_ROUTE]-(c2)")
                                             .ExecuteWithoutResultsAsync();
+
                     }
                 }
 
@@ -96,6 +97,42 @@ namespace API.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating routes.");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPost("upload-city-connections", Name = "UploadCityToCityCSV")]
+        public async Task<IActionResult> CreateCityConnections(IFormFile formFile)
+        {
+            try
+            {
+                using (var reader = new StreamReader(formFile.OpenReadStream()))
+                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                {
+                    var connectionRecords = csv.GetRecords<CityToCityCSVModel>();
+                    foreach (var connectionRecord in connectionRecords)
+                    {
+                        var relationship = new CityToCity
+                        {
+                            city_id_1 = connectionRecord.city_id_1,
+                            city_id_2 = connectionRecord.city_id_2,
+                            mileage = connectionRecord.mileage
+                        };
+
+                        await _client.Cypher.Match("(c1:City), (c2:City)")
+                                            .Where((City c1) => c1.city_id == connectionRecord.city_id_1)
+                                            .AndWhere((City c2) => c2.city_id == connectionRecord.city_id_2)
+                                            .Create("(c1)-[r:C_TO_C]->(c2) $relationship")
+                                            .WithParam("relationship", relationship)
+                                            .ExecuteWithoutResultsAsync();
+                    }
+                }
+
+                return Ok("CSV file for city connection uploaded successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating city connections.");
                 return StatusCode(500, "Internal server error");
             }
         }
