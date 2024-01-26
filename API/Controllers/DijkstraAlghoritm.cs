@@ -34,10 +34,6 @@ namespace API.Controllers
                     )
                 ";
 
-                var result = await _client.Cypher
-                    .WithParams(new { startCityId, endCityId })
-                    .ExecuteWithoutResultsAsync();
-
                 return Ok("Graph projection executed successfully");
             }
             catch (Exception ex)
@@ -71,8 +67,6 @@ namespace API.Controllers
                     }}
                 );
             ";
-
-            await _client.Cypher.ExecuteCypherAsync(query);
         }
     }
 }

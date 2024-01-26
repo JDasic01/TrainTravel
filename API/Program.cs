@@ -2,6 +2,13 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Neo4jClient;
 using Neo4j.Driver;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using RabbitMQ.Client;
+using System.Text;
+using System.Threading.Tasks;
+using API.Models;
+using API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +31,22 @@ builder.Services.AddSingleton<IGraphClient>(provider =>
     client.ConnectAsync().Wait(); // Wait for the connection to complete
     return client;
 });
+
+// Register RabbitMQMessageService as an implementation for IMessageService
+builder.Services.AddSingleton<IMessageService, RabbitMQMessageService>(provider => 
+{
+    var factory = new ConnectionFactory
+    {
+        UserName = "guest",
+        Password = "guest",
+        VirtualHost = "/",
+        HostName = "rabbitmq",
+        Port = 5672,
+    };
+    return new RabbitMQMessageService(factory);
+});
+
+builder.Services.AddScoped<ICacheService, CacheService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
