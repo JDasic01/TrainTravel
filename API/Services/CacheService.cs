@@ -10,6 +10,9 @@ namespace API.Services
     public class CacheService : ICacheService
     {
         private IDatabase _cacheDb;
+        
+        public string city_db_name => "cities";
+        public string route_db_name => "routes";
 
         public CacheService()
         {
@@ -42,18 +45,19 @@ namespace API.Services
             return false;
         }
 
-        public async Task<bool> GetRequest<T>(string key)
+        public async Task<T> GetRequest<T>(string key)
         {
-            var cacheData = GetData<IEnumerable<T>>(key);
+            var cacheData = GetData<T>(key);
 
-            if (cacheData != null && cacheData.Any())
-                return true;
-
+            if (cacheData != null)
+                return cacheData;
+                
             var expiryTime = DateTimeOffset.Now.AddSeconds(30);
             SetData(key, cacheData, expiryTime);
 
-            return true;
+            return cacheData;
         }
+
 
         public void PostRequest<T>(string key, int id, T value)
         {

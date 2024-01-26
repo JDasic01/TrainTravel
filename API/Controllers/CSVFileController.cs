@@ -45,8 +45,6 @@ namespace API.Controllers
                         {
                             city_id = cityRecord.city_id,
                             city_name = cityRecord.city_name,
-                            city_routes = null, 
-                            city_to_city = null 
                         };
                         await _client.Cypher.Create("(c:City $city)")
                                             .WithParam("city", city)
@@ -80,7 +78,6 @@ namespace API.Controllers
                             mileage = routeRecord.mileage,
                             start_city_id = routeRecord.start_city_id,
                             end_city_id = routeRecord.end_city_id,
-                            city_routes = null
                         };
 
                         await _client.Cypher.Create("(r:Route $route)")
