@@ -18,13 +18,11 @@ namespace API.Controllers
     {
         private readonly IGraphClient _client;
         private readonly ILogger<CSVFileController> _logger;
-        //private readonly Neo4jService _driver;
 
         public CSVFileController(ILogger<CSVFileController> logger, IGraphClient client)//, Neo4jService driver)
         {
             _logger = logger;
             _client = client;
-            //_driver = driver;
         }
 
         [HttpPost("upload-cities", Name = "UploadCitiesCSV")]
@@ -42,8 +40,8 @@ namespace API.Controllers
                         {
                             city_id = cityRecord.city_id,
                             city_name = cityRecord.city_name,
-                            city_routes = null, // new HashSet<CityRoute>(),
-                            city_to_city = null // new HashSet<CityToCity>()
+                            city_routes = null, 
+                            city_to_city = null 
                         };
                         await _client.Cypher.Create("(c:City $city)")
                                             .WithParam("city", city)
@@ -63,7 +61,6 @@ namespace API.Controllers
         [HttpPost("upload-routes", Name = "UploadRoutesCSV")]
         public async Task<IActionResult> CreateRoutes(IFormFile formFile)
         {
-            //var session = _driver.GetSession("neo4j");
             try
             {
                 using (var reader = new StreamReader(formFile.OpenReadStream()))
@@ -85,54 +82,12 @@ namespace API.Controllers
                                             .WithParam("route", route)
                                             .ExecuteWithoutResultsAsync();
 
-                        //await session.RunAsync(
-                        //        "MATCH (c:City), (r:Route) " +
-                        //        $"WHERE c.city_id = {routeRecord.start_city_id} " +
-                        //        $"AND r.route_id = {routeRecord.route_id} " +
-                        //        "CREATE (c)-[:HAS_ROUTE]->(r)");
-
                         await _client.Cypher.Match("(c1:City)", "(c2:City)", "(r:Route)")
                                             .Where((City c1) => c1.city_id == routeRecord.start_city_id)
                                             .AndWhere((City c2) => c2.city_id == routeRecord.end_city_id)
                                             .AndWhere((API.Models.Route r) => r.route_id == routeRecord.route_id)
                                             .Create("(c1)-[:HAS_ROUTE]->(r)<-[:HAS_ROUTE]-(c2)")
                                             .ExecuteWithoutResultsAsync();
-
-                        // start end city relation
-                        //var start_city = (await _client.Cypher.Match("(c:City)")
-                        //                        .Where((City c) => c.city_id == routeRecord.start_city_id)
-                        //                        .Return(c => c.As<City>()).ResultsAsync)
-                        //                        .SingleOrDefault();
-
-                        //var end_city = (await _client.Cypher.Match("(c:City)")
-                        //                    .Where((City c) => c.city_id == routeRecord.end_city_id)
-                        //                    .Return(c => c.As<City>()).ResultsAsync)
-                        //                    .SingleOrDefault();
-
-                        //await _client.Cypher.Match("(c:City)", "(r:Route)")
-                        //                    .Where((City c) => c.city_id == start_city.city_id)
-                        //                    .AndWhere((API.Models.Route r) => r.route_id == route.route_id)
-                        //                    .CreateUnique("c-[:HAS_ROUTE]->r")
-                        //                    .ExecuteWithoutResultsAsync();
-
-                        //var startCityRoute = new CityRoute{city_id = routeRecord.start_city_id, route_id = routeRecord.route_id};
-                        //var endCityRoute = new CityRoute{city_id = routeRecord.end_city_id, route_id = routeRecord.route_id};
-
-                        //start_city.city_routes.Add(startCityRoute);
-                        //end_city.city_routes.Add(endCityRoute);
-
-
-                        //await _client.Cypher.Match("(c:City)")
-                        //                    .Where((City c) => c.city_id == routeRecord.start_city_id)
-                        //                    .Set("city_routes = $city_routes")
-                        //                    .WithParam("city_routes", start_city.city_routes)
-                        //                    .ExecuteWithoutResultsAsync();
-
-                        //await _client.Cypher.Match("(c:City)")
-                        //                    .Where((City c) => c.city_id == routeRecord.end_city_id)
-                        //                    .Set("c.city_routes = $city_routes")
-                        //                    .WithParam("city_routes", end_city.city_routes)
-                        //                    .ExecuteWithoutResultsAsync();
                     }
                 }
 
@@ -143,10 +98,6 @@ namespace API.Controllers
                 _logger.LogError(ex, "Error creating routes.");
                 return StatusCode(500, "Internal server error");
             }
-            //finally
-            //{
-            //    await session.CloseAsync();
-            //}
         }
 
         [HttpPost("delete-data", Name = "DeleteDataFromDb")]
