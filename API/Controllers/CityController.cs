@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Models;
+using API.Services;
 
 namespace API.Controllers
 {
@@ -12,12 +13,15 @@ namespace API.Controllers
     [Route("[controller]")]
     public class CityController : ControllerBase
     {
-        
+        private readonly IMessageService _messageService;
         private readonly IGraphClient _client;
+        private readonly ICacheService _cacheService;
 
-        public CityController(IGraphClient client)
+        public CityController(IGraphClient client, IMessageService messageService, ICacheService cacheService)
         {
             _client = client;
+            _messageService = messageService;
+            _cacheService = cacheService;
         }
 
         [HttpGet]
@@ -43,7 +47,8 @@ namespace API.Controllers
                                 .WithParam("city", city)
                                 .ExecuteWithoutResultsAsync();
 
-                return Ok();
+            _messageService.SendMessageAsync(city);
+            return Ok();
         }
 
         [HttpPut("{id}")]
@@ -53,6 +58,8 @@ namespace API.Controllers
                                     .Set("c = $city")
                                     .WithParam("city", city)
                                     .ExecuteWithoutResultsAsync();
+
+            _messageService.SendMessageAsync(city);                      
             return Ok();
         }
 
