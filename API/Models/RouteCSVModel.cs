@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations;
 
 public class RouteCSVModel
 {
-    [Key]
     public int route_id { get; set; }
     public decimal mileage { get; set; }
     public int start_city_id { get; set; }

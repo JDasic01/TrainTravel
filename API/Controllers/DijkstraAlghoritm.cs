@@ -1,7 +1,17 @@
-using System.Collections.Generic;
+using System;
 using System.Threading.Tasks;
-using Neo4jClient;
+using API.Models;
+using API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Neo4jClient;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Hosting;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using System.Text;
+using Npgsql;
+
 
 namespace API.Controllers
 {
@@ -10,63 +20,83 @@ namespace API.Controllers
     public class DijkstraAlgorithm : ControllerBase
     {
         private readonly IGraphClient _client;
+        private readonly ICacheService _cacheService;
 
-        public DijkstraAlgorithm(IGraphClient client)
+        public DijkstraAlgorithm(IGraphClient client, ICacheService cacheService)
         {
             _client = client;
+            _cacheService = cacheService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> FindShortestPath(string startCityId, string endCityId)
+        public async Task<IActionResult> FindShortestPath(int startCityId, int endCityId)
         {
-            await CreateGraphProjection();
-            
             try
             {
-                var query = @"
-                    CALL gds.graph.project(
-                        'yourGraphName',
-                        ['YourNodeLabel', 'AnotherLabel'],
-                        ['HAS_ROUTE'],
-                        {
-                            relationshipProperties: 'yourCostProperty'
-                        }
-                    )
-                ";
+                var minMileage = 1000;
 
-                return Ok("Graph projection executed successfully");
+                var query = _client
+                    .Cypher.Match(
+                        "p=shortestPath((start_city:City {city_id: "
+                            + startCityId
+                            + "})-[*]-(end_city:City {city_id: "
+                            + endCityId
+                            + "}))"
+                    )
+                    .Where("ALL(rel IN relationships(p) WHERE rel.mileage <= " + minMileage + ")")
+                    .WithParam("startCityId", startCityId)
+                    .WithParam("endCityId", endCityId)
+                    .WithParam("minMileage", minMileage)
+                    .Return<object>("p");
+
+                // Deserialize the result into a dynamic object (plaky)
+                var queryResult = await query.ResultsAsync; // Await the asynchronous call
+                var result = queryResult?.FirstOrDefault();
+                Console.WriteLine(result);
+                if (result != null)
+                {
+                    var resultJson = JsonConvert.SerializeObject(result);
+                    Console.WriteLine(resultJson);
+                    var deserializedResult = JsonConvert.DeserializeObject<dynamic>(resultJson);
+
+                    // Extract information from the deserialized result
+                    var startCity = deserializedResult?.start?.properties?.city_name?.ToString();
+                    var endCity = deserializedResult?.end?.properties?.city_name?.ToString();
+                    var segments = deserializedResult?.segments as JArray;
+                    var path = segments
+                        ?.Select(s => s["end"]["properties"]["city_name"].ToString())
+                        .ToList();
+                    var totalMileage = segments?.Sum(s =>
+                        (double)s["relationship"]["properties"]["mileage"]
+                    );
+
+                    // Create a custom DTO
+                    var pathInfo = new PathInfo
+                    {
+                        StartCity = startCity,
+                        EndCity = endCity,
+                        Path = path,
+                        TotalMileage = totalMileage ?? 0.0,
+                    };
+
+                    // Return the structured response
+                    return Ok(deserializedResult);
+                }
+
+                return BadRequest("bed");
             }
             catch (Exception ex)
             {
-                return BadRequest($"Error executing graph projection: {ex.Message}");
+                return BadRequest($"Error executing Dijkstra algorithm: {ex.Message}");
             }
         }
 
-        private async Task CreateGraphProjection()
+        public class PathInfo
         {
-            // Replace 'yourGraphName', 'YourNodeLabel', 'YOUR_RELATIONSHIP_TYPE', and 'yourCostProperty'
-            var graphName = "ShortestRoute";
-            var nodeLabel = "YourNodeLabel";
-            var relationshipType = "C_TO_C";
-            var relationshipProperty = "yourCostProperty";
-
-            // Cypher query to create graph projection
-            var query = $@"
-                CALL gds.graph.create(
-                    '{graphName}', 
-                    {{
-                        {nodeLabel}: {{
-                            label: '{nodeLabel}'
-                        }}
-                    }}, 
-                    {{
-                        {relationshipType}: {{
-                            type: '{relationshipType}',
-                            properties: '{relationshipProperty}'
-                        }}
-                    }}
-                );
-            ";
+            public string StartCity { get; set; }
+            public string EndCity { get; set; }
+            public List<string> Path { get; set; }
+            public double TotalMileage { get; set; }
         }
     }
 }

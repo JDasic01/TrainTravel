@@ -22,7 +22,7 @@ builder.Services.AddSingleton<Neo4jService>(provider =>
     return new Neo4jService(neo4jSettings.Uri, neo4jSettings.Username, neo4jSettings.Password);
 });
 
-// Use Neo4jService to create the GraphClient and connect to Neo4j
+// Use Neo4jService to create the GraphClien/*  */t and connect to Neo4j
 builder.Services.AddSingleton<IGraphClient>(provider =>
 {
     var neo4jSettings = builder.Configuration.GetSection("Neo4jSettings").Get<Neo4jSettings>();
@@ -33,7 +33,7 @@ builder.Services.AddSingleton<IGraphClient>(provider =>
 });
 
 // Register RabbitMQMessageService as an implementation for IMessageService
-builder.Services.AddSingleton<IMessageService, RabbitMQMessageService>(provider => 
+builder.Services.AddSingleton<IMessageService<API.Models.Route>, RabbitMQMessageService<API.Models.Route>>(provider => 
 {
     var factory = new ConnectionFactory
     {
@@ -43,7 +43,11 @@ builder.Services.AddSingleton<IMessageService, RabbitMQMessageService>(provider 
         HostName = "rabbitmq",
         Port = 5672,
     };
-    return new RabbitMQMessageService(factory);
+
+    var connection = factory.CreateConnection();
+    var channel = connection.CreateModel();
+
+    return new RabbitMQMessageService<API.Models.Route>(factory, connection, channel);
 });
 
 builder.Services.AddScoped<ICacheService, CacheService>();

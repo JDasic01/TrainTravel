@@ -1,14 +1,15 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using CsvHelper;
-using System.Globalization;
-using System.IO;
-using System.Threading.Tasks;
-using API.Models;
-using Neo4jClient;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using API.Models;
+using API.Services;
+using CsvHelper;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Neo4jClient;
 
 namespace API.Controllers
 {
@@ -18,11 +19,17 @@ namespace API.Controllers
     {
         private readonly IGraphClient _client;
         private readonly ILogger<CSVFileController> _logger;
+        private readonly ICacheService _cacheService;
 
-        public CSVFileController(ILogger<CSVFileController> logger, IGraphClient client)
+        public CSVFileController(
+            ILogger<CSVFileController> logger,
+            IGraphClient client,
+            ICacheService cacheService
+        )
         {
             _logger = logger;
             _client = client;
+            _cacheService = cacheService;
         }
 
         [HttpPost("upload-cities", Name = "UploadCitiesCSV")]
@@ -40,13 +47,15 @@ namespace API.Controllers
                         {
                             city_id = cityRecord.city_id,
                             city_name = cityRecord.city_name,
-                            city_routes = null, 
-                            city_to_city = null 
                         };
-                        await _client.Cypher.Create("(c:City $city)")
-                                            .WithParam("city", city)
-                                            .ExecuteWithoutResultsAsync();
-                    }  
+
+                        await _client
+                            .Cypher.Create("(c:City $city)")
+                            .WithParam("city", city)
+                            .ExecuteWithoutResultsAsync();
+
+                        _cacheService.PostRequest(_cacheService.city_db_name, city.city_id, city);
+                    }
                 }
 
                 return Ok("CSV file for cities uploaded successfully.");
@@ -75,20 +84,27 @@ namespace API.Controllers
                             mileage = routeRecord.mileage,
                             start_city_id = routeRecord.start_city_id,
                             end_city_id = routeRecord.end_city_id,
-                            city_routes = null
                         };
 
-                        await _client.Cypher.Create("(r:Route $route)")
-                                            .WithParam("route", route)
-                                            .ExecuteWithoutResultsAsync();
+                        await _client
+                            .Cypher.Match("(c1:City { city_id: " + route.start_city_id + " })")
+                            .Match("(c2:City { city_id: " + route.end_city_id + " })")
+                            .Merge($"(c1)-[r1:HAS_LINE]->(c2)")
+                            .Set($"r1 = {{ mileage: {route.mileage}, route_id: {route.route_id} }}")
+                            .ExecuteWithoutResultsAsync();
 
+                        await _client
+                            .Cypher.Match("(c2:City { city_id: " + route.end_city_id + " })")
+                            .Match("(c1:City { city_id: " + route.start_city_id + " })")
+                            .Merge($"(c2)-[r2:HAS_LINE]->(c1)")
+                            .Set($"r2 = {{ mileage: {route.mileage}, route_id: {route.route_id} }}")
+                            .ExecuteWithoutResultsAsync();
 
-                        await _client.Cypher.Match("(c:City), (r:Route)")
-                                            .Where((City c) => c.city_id == routeRecord.start_city_id)
-                                            .AndWhere((API.Models.Route r) => r.route_id == routeRecord.route_id)
-                                            .Create("(c1)-[:HAS_ROUTE]->(r)<-[:HAS_ROUTE]-(c2)")
-                                            .ExecuteWithoutResultsAsync();
-
+                        _cacheService.PostRequest(
+                            _cacheService.route_db_name,
+                            route.route_id,
+                            route
+                        );
                     }
                 }
 
@@ -142,13 +158,12 @@ namespace API.Controllers
         {
             try
             {
-                await _client.Cypher.OptionalMatch("(n)<-[r]-()")
-                                    .Delete("r, n")
-                                    .ExecuteWithoutResultsAsync();
+                await _client
+                    .Cypher.OptionalMatch("(n)<-[r]-()")
+                    .Delete("r, n")
+                    .ExecuteWithoutResultsAsync();
                 // Gornji valjda brise samo povezane nodeove
-                await _client.Cypher.OptionalMatch("(n)")
-                                    .Delete("n")
-                                    .ExecuteWithoutResultsAsync();
+                await _client.Cypher.OptionalMatch("(n)").Delete("n").ExecuteWithoutResultsAsync();
                 return Ok("All data deleted sucessfuly");
             }
             catch (Exception ex)

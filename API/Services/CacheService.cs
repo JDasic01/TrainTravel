@@ -1,12 +1,18 @@
 using StackExchange.Redis;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks; 
 
 namespace API.Services
 {
     public class CacheService : ICacheService
     {
         private IDatabase _cacheDb;
+        
+        public string city_db_name => "cities";
+        public string route_db_name => "routes";
 
         public CacheService()
         {
@@ -29,7 +35,7 @@ namespace API.Services
             return _cacheDb.StringSet(key, JsonSerializer.Serialize(value), expiryTime);
         }
 
-        public bool RemoveData<T>(string key)
+        public bool RemoveData(string key)
         {
             var exists = _cacheDb.KeyExists(key);
 
@@ -37,6 +43,31 @@ namespace API.Services
                 return _cacheDb.KeyDelete(key);
 
             return false;
+        }
+
+        public async Task<T> GetRequest<T>(string key)
+        {
+            var cacheData = GetData<T>(key);
+
+            if (cacheData != null)
+                return cacheData;
+                
+            var expiryTime = DateTimeOffset.Now.AddSeconds(30);
+            SetData(key, cacheData, expiryTime);
+
+            return cacheData;
+        }
+
+
+        public void PostRequest<T>(string key, int id, T value)
+        {
+            var expiryTime = DateTimeOffset.Now.AddSeconds(30);
+            SetData($"{key}{id}", value, expiryTime);
+        }
+
+        public void DeleteRequest(string key, int id)
+        {
+            RemoveData($"{key}{id}");
         }
     }
 }
