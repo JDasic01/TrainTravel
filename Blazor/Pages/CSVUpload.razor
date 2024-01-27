@@ -16,12 +16,12 @@
 <InputFile OnChange="HandleCityFileUpload" disabled="@(!CanUploadCities)"/>
 <button class="btn btn-primary" @onclick="SubmitCities" disabled="@(!CanUploadCities)">Submit</button>
 
-<p>2. Upload train routes</p>
-<p role="status">Status: @uploadRouteStatus</p>
-<InputFile OnChange="HandleRouteFileUpload" disabled="@(!CanUploadRoutes)"/>
-<button class="btn btn-primary" @onclick="SubmitRoutes" disabled="@(!CanUploadRoutes)">Submit</button>
+<p>2. Upload lines</p>
+<p role="status">Status: @uploadLineStatus</p>
+<InputFile OnChange="HandleLineFileUpload" disabled="@(!CanUploadLines)"/>
+<button class="btn btn-primary" @onclick="SubmitLines" disabled="@(!CanUploadLines)">Submit</button>
 
-<p>3. Upload lines</p>
+<p>3. Upload train routes</p>
 <p role="status">Status: @uploadRouteStatus</p>
 <InputFile OnChange="HandleRouteFileUpload" disabled="@(!CanUploadRoutes)"/>
 <button class="btn btn-primary" @onclick="SubmitRoutes" disabled="@(!CanUploadRoutes)">Submit</button>
@@ -30,17 +30,22 @@
     private bool CanResetDatabase => cities.Length != 0 || routes.Length != 0;
     private bool CanUploadCities => cities.Length == 0;
     private bool CanUploadRoutes => routes.Length == 0;
+    private bool CanUploadLines => lines.Length == 0;
 
     private string dataDeleted = "";
 
     private string uploadCityStatus = "";
     private IBrowserFile selectedCityFile;
 
+    private string uploadLineStatus = "";
+    private IBrowserFile selectedLineFile;
+
     private string uploadRouteStatus = "";
     private IBrowserFile selectedRouteFile;
 
     private City[] cities = new City[0];
-    private TrainRoute[] routes = new Blazor.Data.TrainRoute[0];
+    private Line[] lines = new Line[0];
+    private TrainRoute[] routes = new TrainRoute[0];
 
     protected override async Task OnInitializedAsync()
     {
@@ -50,6 +55,7 @@
     private async Task LoadData()
     {
         cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
+        lines = await HttpClient.GetFromJsonAsync<Line?[]>("http://api:8082/Line");
         routes = await HttpClient.GetFromJsonAsync<TrainRoute?[]>("http://api:8082/TrainRoute");
     }
 
@@ -77,6 +83,16 @@
         if (selectedCityFile != null)
         {
             uploadCityStatus = $"Selected file: {selectedCityFile.Name}";
+        }
+    }
+
+    private async Task HandleLineFileUpload(InputFileChangeEventArgs e)
+    {
+        selectedLineFile = e.File;
+
+        if (selectedLineFile != null)
+        {
+            uploadLineStatus = $"Selected file: {selectedLineFile.Name}";
         }
     }
 
@@ -127,7 +143,7 @@
             {
                 content.Add(new StreamContent(selectedRouteFile.OpenReadStream()), "formFile", selectedRouteFile.Name);
 
-                var response = await HttpClient.PostAsync("http://api:8082/csv-file-upload/upload-routes", content);
+                var response = await HttpClient.PostAsync("http://api:8082/csv-file-upload/upload-train-routes", content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -145,6 +161,35 @@
         else
         {
             uploadRouteStatus = "Please select a file before submitting.";
+        }
+    }
+
+    private async Task SubmitLines()
+    {
+        if (selectedLineFile != null)
+        {
+            using (var content = new MultipartFormDataContent())
+            {
+                content.Add(new StreamContent(selectedLineFile.OpenReadStream()), "formFile", selectedLineFile.Name);
+
+                var response = await HttpClient.PostAsync("http://api:8082/csv-file-upload/upload-lines", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    uploadLineStatus = "CSV file uploaded successfully.";
+                    await LoadData(); 
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    uploadLineStatus = $"Error uploading CSV file. Status code: {response.StatusCode}. Error Message: {errorMessage}";
+                    Console.WriteLine(errorMessage);
+                }
+            }
+        }
+        else
+        {
+            uploadLineStatus = "Please select a file before submitting.";
         }
     }
 }

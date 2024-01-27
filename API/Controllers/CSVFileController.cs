@@ -139,9 +139,11 @@ namespace API.Controllers
 
                         await _client
                             .Cypher.Create(
-                                "(t:TrainRoute {line_id: $line_id})"
+                                "(t:TrainRoute {line_id: $line_id, city_ids: $city_ids, mileage: $mileage})"
                             )
                             .WithParam("line_id", trainRoute.line_id)
+                            .WithParam("city_ids", trainRouteRecord.city_ids)
+                            .WithParam("mileage", trainRouteRecord.mileage)
                             .ExecuteWithoutResultsAsync();
 
                         // Create relationships between cities based on the city_ids and mileage
@@ -160,6 +162,19 @@ namespace API.Controllers
                                 )
                                 .Set(
                                     $"r{currentCityId}{nextCityId} = {{ mileage: {trainRoute.mileage[i]}, line_id: {trainRoute.line_id} }}"
+                                )
+                                .ExecuteWithoutResultsAsync();
+
+                            await _client
+                                .Cypher.Match(
+                                    $"(c{nextCityId}:City {{ city_id: {nextCityId} }})"
+                                )
+                                .Match($"(c{currentCityId}:City {{ city_id: {currentCityId} }})")
+                                .Merge(
+                                    $"(c{nextCityId})-[r{nextCityId}{currentCityId}:HAS_ROUTE]->(c{currentCityId})"
+                                )
+                                .Set(
+                                    $"r{nextCityId}{currentCityId} = {{ mileage: {trainRoute.mileage[i]}, line_id: {trainRoute.line_id} }}"
                                 )
                                 .ExecuteWithoutResultsAsync();
                         }
