@@ -1,0 +1,47 @@
+﻿@page "/routes"
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using System.Net.Http.Headers;
+@using Blazor.Data;
+
+<PageTitle>Routes</PageTitle>
+
+<h1>Routes</h1>
+
+<a class="btn btn-primary" href="/routes/add" role="button">New route</a>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Start city</th>
+                <th scope="col">End city</th>
+                <th scope="col">Mileage</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var route in routes)
+            {
+            <tr>
+                    @*<td>@cities.First(x => x.city_id == route.start_city_id).city_name</td>*@
+                    <td>@route.end_city_id</td>
+                    <td>@route.mileage</td>
+            </tr>
+            }
+        </tbody>
+    </table>
+
+@code {
+    private City[] cities = new City[0];
+    private Blazor.Data.Route[] routes = new Blazor.Data.Route[0];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
+        routes = await HttpClient.GetFromJsonAsync<Blazor.Data.Route?[]>("http://api:8082/Route");
+    }
+}

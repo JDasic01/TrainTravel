@@ -33,7 +33,7 @@ builder.Services.AddSingleton<IGraphClient>(provider =>
 });
 
 // Register RabbitMQMessageService as an implementation for IMessageService
-builder.Services.AddSingleton<IMessageService, RabbitMQMessageService>(provider => 
+builder.Services.AddSingleton<IMessageService<API.Models.Route>, RabbitMQMessageService<API.Models.Route>>(provider => 
 {
     var factory = new ConnectionFactory
     {
@@ -43,7 +43,11 @@ builder.Services.AddSingleton<IMessageService, RabbitMQMessageService>(provider 
         HostName = "rabbitmq",
         Port = 5672,
     };
-    return new RabbitMQMessageService(factory);
+
+    var connection = factory.CreateConnection();
+    var channel = connection.CreateModel();
+
+    return new RabbitMQMessageService<API.Models.Route>(factory, connection, channel);
 });
 
 builder.Services.AddScoped<ICacheService, CacheService>();

@@ -1,32 +1,66 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using API.Models;
+using API.Services;
+using CsvHelper;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Neo4jClient;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using System.Text;
 
-public interface IMessageService
+public interface IMessageService<T>
 {
-    Task SendMessageAsync(City city);
+    Task SendMessageAsync(T message, string channel);
+    Task<T> ReceiveMessageAsync(string channel);
 }
 
-public class RabbitMQMessageService : IMessageService
+public class RabbitMQMessageService<T> : IMessageService<T>, IDisposable
 {
     private readonly ConnectionFactory _factory;
+    private readonly IConnection _connection;
+    private readonly IModel _channel;
 
-    public RabbitMQMessageService(ConnectionFactory factory)
+    public RabbitMQMessageService(ConnectionFactory factory, IConnection connection, IModel channel)
     {
         _factory = factory;
+        _connection = _factory.CreateConnection();
+        _channel = _connection.CreateModel();
+        _channel.QueueDeclare(queue: Constants.cities_queue_name, durable: false, exclusive: false, autoDelete: false, arguments: null);
+        _channel.QueueDeclare(queue: Constants.routes_queue_name, durable: false, exclusive: false, autoDelete: false, arguments: null);
     }
 
-    public async Task SendMessageAsync(City city)
+    public async Task SendMessageAsync(T message, string channel)
     {
-        using (var connection = _factory.CreateConnection())
-        using (var channel = connection.CreateModel())
+        var serializedMessage = Newtonsoft.Json.JsonConvert.SerializeObject(message);
+        var body = Encoding.UTF8.GetBytes(serializedMessage);
+
+        await Task.Run(() => _channel.BasicPublish(exchange: "", routingKey: channel, basicProperties: null, body: body));
+    }
+
+    public async Task<T> ReceiveMessageAsync(string channel)
+    {
+        var result = await Task.Run(() =>
         {
-            channel.QueueDeclare(queue: "city_routes", durable: false, exclusive: false, autoDelete: false, arguments: null);
+            BasicGetResult messageResult = _channel.BasicGet(channel, autoAck: true);
+            if (messageResult == null)
+                return default(T);
 
-            var message = Newtonsoft.Json.JsonConvert.SerializeObject(city);
-            var body = Encoding.UTF8.GetBytes(message);
+            var messageBody = Encoding.UTF8.GetString(messageResult.Body.ToArray());
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(messageBody);
+        });
 
-            await Task.Run(() => channel.BasicPublish(exchange: "", routingKey: "city_routes", basicProperties: null, body: body));
-        }
+        return result;
+    }
+
+    public void Dispose()
+    {
+        _channel.Close();
+        _connection.Close();
     }
 }
