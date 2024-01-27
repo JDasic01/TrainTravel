@@ -1,0 +1,41 @@
+﻿@page "/cities"
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using System.Net.Http.Headers;
+@using Blazor.Data;
+
+<PageTitle>Cities</PageTitle>
+
+<h1>Cities</h1>
+
+<a class="btn btn-primary" href="/cities/add" role="button">New city</a>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var city in cities)
+            {
+            <tr>
+                    <td>@city.city_name</td>
+            </tr>
+            }
+        </tbody>
+    </table>
+
+@code {
+    private City[] cities = new City[0];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
+    }
+}

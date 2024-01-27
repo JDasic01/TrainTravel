@@ -1,0 +1,55 @@
+﻿@page "/cities/add"
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using System.Net.Http.Headers;
+@using Blazor.Data;
+
+<PageTitle>Cities</PageTitle>
+
+<h1>Cities</h1>
+
+<a class="btn btn-primary" href="/cities" role="button">Return</a>
+
+    <form method="post" >
+        <fieldset>
+          <legend>Add city</legend>
+          <div>
+            <label for="city_name">City name:</label>
+            <input type="text" name="city_name" value="" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <input type="submit" value="Submit" class="submit" />
+          </div>
+        </fieldset>
+      </form>
+
+
+@code {
+    private City[] cities = new City[0];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
+    }
+
+    int max_id = cities.Max(x -> x.city_id)
+
+    if (max_id > 100){
+        max_id++
+    }
+    else {
+        max_id = 101
+    }
+
+    private async Task OnPost() {
+        var city_name = Request.Form["city_name"];
+        private City new_city = new City(max_);
+        
+    }
+}

@@ -4,13 +4,13 @@
 @using System.Net.Http.Headers;
 @using Blazor.Data;
 
-<PageTitle>cities</PageTitle>
+<PageTitle>Cities</PageTitle>
 
-<h1>cities</h1>
+<h1>Cities</h1>
 
-<a class="btn btn-primary" href="/cities/add" role="button">New cities</a>
+<a class="btn btn-primary" href="/cities/add" role="button">New city</a>
 
-    <!-- <table class="table">
+    <table class="table">
         <thead>
             <tr>
                 <th scope="col">Name</th>
@@ -38,4 +38,4 @@
     {
         cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
     }
-} -->
+}
