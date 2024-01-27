@@ -11,7 +11,7 @@
 <p role="status">Status: @dataDeleted</p>
 <button @onclick="DeleteAllData" disabled="@(!CanResetDatabase)">Reset database</button>
 
-<p>1. Upload cities</p>
+<p>1. 1. Upload cities</p>
 <p role="status">Status: @uploadCityStatus</p>
 <InputFile OnChange="HandleCityFileUpload" disabled="@(!CanUploadCities)"/>
 <button class="btn btn-primary" @onclick="SubmitCities" disabled="@(!CanUploadCities)">Submit</button>
