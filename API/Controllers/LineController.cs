@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Services;
+using API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Neo4jClient;
 
@@ -10,16 +11,16 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class RouteController : ControllerBase
+    public class LineController : ControllerBase
     {
         private readonly IGraphClient _client;
         private readonly ICacheService _cacheService;
-        private readonly IMessageService<API.Models.Route> _messageService;
+        private readonly IMessageService<Line> _messageService;
 
-        public RouteController(
+        public LineController(
             IGraphClient client,
             ICacheService cacheService,
-            IMessageService<API.Models.Route> messageService
+            IMessageService<Line> messageService
         )
         {
             _client = client;
@@ -30,47 +31,47 @@ namespace API.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var routes = await _client
-                .Cypher.Match("(n:Route)")
-                .Return(n => n.As<API.Models.Route>())
+            var lines = await _client
+                .Cypher.Match("(n:Line)")
+                .Return(n => n.As<Line>())
                 .ResultsAsync;
 
-            return Ok(routes);
+            return Ok(lines);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var route = await _client
-                .Cypher.Match("(r:Route)")
-                .Where((API.Models.Route r) => r.route_id == id)
-                .Return(r => r.As<API.Models.Route>())
+            var line = await _client
+                .Cypher.Match("(l:Line)")
+                .Where((Line l) => l.line_id == id)
+                .Return(l => l.As<Line>())
                 .ResultsAsync;
 
-            return Ok(route.LastOrDefault());
+            return Ok(line.LastOrDefault());
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] API.Models.Route route)
+        public async Task<IActionResult> Create([FromBody] Line line)
         {
             await _client
-                .Cypher.Create("(r:Route $route)")
-                .WithParam("route", route)
+                .Cypher.Create("(l:Line $line)")
+                .WithParam("line", line)
                 .ExecuteWithoutResultsAsync();
 
-            await _messageService.SendMessageAsync(route, Constants.routes_queue_name);
+            await _messageService.SendMessageAsync(line, Constants.lines_queue_name);
 
             return Ok();
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] API.Models.Route route)
+        public async Task<IActionResult> Update(int id, [FromBody] Line line)
         {
             await _client
-                .Cypher.Match("(r:Route)")
-                .Where((API.Models.Route r) => r.route_id == id)
-                .Set("r = $route")
-                .WithParam("route", route)
+                .Cypher.Match("(l:Line)")
+                .Where((Line l) => l.line_id == id)
+                .Set("l = $line")
+                .WithParam("line", line)
                 .ExecuteWithoutResultsAsync();
             return Ok();
         }
@@ -79,9 +80,9 @@ namespace API.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             await _client
-                .Cypher.Match("(r:Route)")
-                .Where((API.Models.Route r) => r.route_id == id)
-                .Delete("r")
+                .Cypher.Match("(l:Line)")
+                .Where((Line l) => l.line_id == id)
+                .Delete("l")
                 .ExecuteWithoutResultsAsync();
             return Ok();
         }

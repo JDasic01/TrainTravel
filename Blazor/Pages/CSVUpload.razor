@@ -11,12 +11,17 @@
 <p role="status">Status: @dataDeleted</p>
 <button @onclick="DeleteAllData" disabled="@(!CanResetDatabase)">Reset database</button>
 
-<p>Upload cities</p>
+<p>1. Upload cities</p>
 <p role="status">Status: @uploadCityStatus</p>
 <InputFile OnChange="HandleCityFileUpload" disabled="@(!CanUploadCities)"/>
 <button class="btn btn-primary" @onclick="SubmitCities" disabled="@(!CanUploadCities)">Submit</button>
 
-<p>Upload routes</p>
+<p>2. Upload train routes</p>
+<p role="status">Status: @uploadRouteStatus</p>
+<InputFile OnChange="HandleRouteFileUpload" disabled="@(!CanUploadRoutes)"/>
+<button class="btn btn-primary" @onclick="SubmitRoutes" disabled="@(!CanUploadRoutes)">Submit</button>
+
+<p>3. Upload lines</p>
 <p role="status">Status: @uploadRouteStatus</p>
 <InputFile OnChange="HandleRouteFileUpload" disabled="@(!CanUploadRoutes)"/>
 <button class="btn btn-primary" @onclick="SubmitRoutes" disabled="@(!CanUploadRoutes)">Submit</button>
@@ -35,7 +40,7 @@
     private IBrowserFile selectedRouteFile;
 
     private City[] cities = new City[0];
-    private Blazor.Data.Route[] routes = new Blazor.Data.Route[0];
+    private TrainRoute[] routes = new Blazor.Data.TrainRoute[0];
 
     protected override async Task OnInitializedAsync()
     {
@@ -45,7 +50,7 @@
     private async Task LoadData()
     {
         cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
-        routes = await HttpClient.GetFromJsonAsync<Blazor.Data.Route?[]>("http://api:8082/Route");
+        routes = await HttpClient.GetFromJsonAsync<TrainRoute?[]>("http://api:8082/TrainRoute");
     }
 
     private async Task DeleteAllData()

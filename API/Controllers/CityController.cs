@@ -67,7 +67,7 @@ namespace API.Controllers
                             new
                             {
                                 City = c.As<City>(),
-                                Routes = r.CollectAs<API.Models.Route>(),
+                                Lines = r.CollectAs<Line>(),
                                 OtherCities = other.CollectAs<City>()
                             }
                     )
@@ -81,11 +81,10 @@ namespace API.Controllers
                         CityId = item.City.city_id,
                         CityName = item.City.city_name,
                         AvailableRoutes = item
-                            .Routes.Select(route => new
+                            .Lines.Select(line => new
                             {
-                                RouteId = route.route_id,
-                                Mileage = route.mileage,
-                                EndCityId = item.OtherCities.First().city_id, // Assuming one route goes to one city
+                                LineId = line.line_id,
+                                EndCityId = item.OtherCities.First().city_id,
                                 EndCityName = item.OtherCities.First().city_name
                             })
                             .ToList()
@@ -101,7 +100,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving city with routes.");
+                _logger.LogError(ex, "Error retrieving city with lines.");
                 return StatusCode(500, "Internal server error");
             }
         }
