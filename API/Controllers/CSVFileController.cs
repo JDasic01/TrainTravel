@@ -117,42 +117,6 @@ namespace API.Controllers
             }
         }
 
-        [HttpPost("upload-city-connections", Name = "UploadCityToCityCSV")]
-        public async Task<IActionResult> CreateCityConnections(IFormFile formFile)
-        {
-            try
-            {
-                using (var reader = new StreamReader(formFile.OpenReadStream()))
-                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-                {
-                    var connectionRecords = csv.GetRecords<CityToCityCSVModel>();
-                    foreach (var connectionRecord in connectionRecords)
-                    {
-                        var relationship = new CityToCity
-                        {
-                            city_id_1 = connectionRecord.city_id_1,
-                            city_id_2 = connectionRecord.city_id_2,
-                            mileage = connectionRecord.mileage
-                        };
-
-                        await _client.Cypher.Match("(c1:City), (c2:City)")
-                                            .Where((City c1) => c1.city_id == connectionRecord.city_id_1)
-                                            .AndWhere((City c2) => c2.city_id == connectionRecord.city_id_2)
-                                            .Create("(c1)-[r:C_TO_C]->(c2) $relationship")
-                                            .WithParam("relationship", relationship)
-                                            .ExecuteWithoutResultsAsync();
-                    }
-                }
-
-                return Ok("CSV file for city connection uploaded successfully.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating city connections.");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
         [HttpPost("delete-data", Name = "DeleteDataFromDb")]
         public async Task<IActionResult> DeleteAll()
         {
