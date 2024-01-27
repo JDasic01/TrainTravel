@@ -27,7 +27,7 @@
 <button class="btn btn-primary" @onclick="SubmitRoutes" disabled="@(!CanUploadRoutes)">Submit</button>
 
 @code {
-    private bool CanResetDatabase => cities.Length != 0 || routes.Length != 0;
+    private bool CanResetDatabase => cities.Length != 0 || routes.Length != 0 || lines.Length != 0;
     private bool CanUploadCities => cities.Length == 0;
     private bool CanUploadRoutes => routes.Length == 0;
     private bool CanUploadLines => lines.Length == 0;

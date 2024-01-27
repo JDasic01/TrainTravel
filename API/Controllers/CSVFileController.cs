@@ -69,8 +69,6 @@ namespace API.Controllers
 
         [HttpPost("upload-lines", Name = "UploadLinesCSV")]
         public async Task<IActionResult> CreateLines(IFormFile formFile)
-        [HttpPost("upload-lines", Name = "UploadLinesCSV")]
-        public async Task<IActionResult> CreateLines(IFormFile formFile)
         {
             try
             {
@@ -79,16 +77,9 @@ namespace API.Controllers
                 {
                     var lineRecords = csv.GetRecords<LineCSVModel>();
                     foreach (var lineRecord in lineRecords)
-                    var lineRecords = csv.GetRecords<LineCSVModel>();
-                    foreach (var lineRecord in lineRecords)
                     {
                         var line = new Line
-                        var line = new Line
                         {
-                            line_id = lineRecord.line_id,
-                            line_name = lineRecord.line_name,
-                            start_city_id = lineRecord.start_city_id,
-                            end_city_id = lineRecord.end_city_id,
                             line_id = lineRecord.line_id,
                             line_name = lineRecord.line_name,
                             start_city_id = lineRecord.start_city_id,
@@ -98,12 +89,7 @@ namespace API.Controllers
                         await _client
                             .Cypher.Match("(c1:City { city_id: " + line.start_city_id + " })")
                             .Match("(c2:City { city_id: " + line.end_city_id + " })")
-                            .Cypher.Match("(c1:City { city_id: " + line.start_city_id + " })")
-                            .Match("(c2:City { city_id: " + line.end_city_id + " })")
                             .Merge($"(c1)-[r1:HAS_LINE]->(c2)")
-                            .Set(
-                                $"r1 = {{ line_id: {line.line_id}, line_name: '{line.line_name}' }}"
-                            )
                             .Set(
                                 $"r1 = {{ line_id: {line.line_id}, line_name: '{line.line_name}' }}"
                             )
@@ -111,11 +97,7 @@ namespace API.Controllers
 
                         string[] parts = line.line_name.Split('-');
                         var oppositeName = $"{parts[1]}-{parts[0]}";
-                        string[] parts = line.line_name.Split('-');
-                        var oppositeName = $"{parts[1]}-{parts[0]}";
                         await _client
-                            .Cypher.Match("(c2:City { city_id: " + line.end_city_id + " })")
-                            .Match("(c1:City { city_id: " + line.start_city_id + " })")
                             .Cypher.Match("(c2:City { city_id: " + line.end_city_id + " })")
                             .Match("(c1:City { city_id: " + line.start_city_id + " })")
                             .Merge($"(c2)-[r2:HAS_LINE]->(c1)")
@@ -162,47 +144,6 @@ namespace API.Controllers
                             .WithParam("line_id", trainRoute.line_id)
                             .WithParam("city_ids", trainRouteRecord.city_ids)
                             .WithParam("mileage", trainRouteRecord.mileage)
-                            .Set(
-                                $"r2 = {{ line_id: {line.line_id}, line_name: '{oppositeName}' }}"
-                            )
-                            .ExecuteWithoutResultsAsync();
-
-                        _cacheService.PostRequest(_cacheService.route_db_name, line.line_id, line);
-                    }
-                }
-
-                return Ok("CSV file for lines uploaded successfully.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating lines.");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        [HttpPost("upload-train-routes", Name = "UploadTrainRoutesCSV")]
-        public async Task<IActionResult> CreateRoutes(IFormFile formFile)
-        {
-            try
-            {
-                using (var reader = new StreamReader(formFile.OpenReadStream()))
-                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-                {
-                    var trainRouteRecords = csv.GetRecords<TrainRouteCSV>();
-                    foreach (var trainRouteRecord in trainRouteRecords)
-                    {
-                        var trainRoute = new TrainRoute
-                        {
-                            line_id = trainRouteRecord.line_id,
-                            city_ids = ParseCityIds(trainRouteRecord.city_ids),
-                            mileage = ParseMileage(trainRouteRecord.mileage),
-                        };
-
-                        await _client
-                            .Cypher.Create(
-                                "(t:TrainRoute {line_id: $line_id})"
-                            )
-                            .WithParam("line_id", trainRoute.line_id)
                             .ExecuteWithoutResultsAsync();
 
                         // Create relationships between cities based on the city_ids and mileage
@@ -238,47 +179,15 @@ namespace API.Controllers
                                 .ExecuteWithoutResultsAsync();
                         }
                     }
-                        // Create relationships between cities based on the city_ids and mileage
-                        for (int i = 0; i < trainRoute.city_ids.Count - 1; i++)
-                        {
-                            int currentCityId = trainRoute.city_ids[i];
-                            int nextCityId = trainRoute.city_ids[i + 1];
-
-                            await _client
-                                .Cypher.Match(
-                                    $"(c{currentCityId}:City {{ city_id: {currentCityId} }})"
-                                )
-                                .Match($"(c{nextCityId}:City {{ city_id: {nextCityId} }})")
-                                .Merge(
-                                    $"(c{currentCityId})-[r{currentCityId}{nextCityId}:HAS_ROUTE]->(c{nextCityId})"
-                                )
-                                .Set(
-                                    $"r{currentCityId}{nextCityId} = {{ mileage: {trainRoute.mileage[i]}, line_id: {trainRoute.line_id} }}"
-                                )
-                                .ExecuteWithoutResultsAsync();
-                        }
-                    }
                 }
 
-                return Ok("CSV file for train routes uploaded successfully.");
                 return Ok("CSV file for train routes uploaded successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating train routes.");
-                _logger.LogError(ex, "Error creating train routes.");
                 return StatusCode(500, "Internal server error");
             }
-        }
-
-        private List<int> ParseCityIds(string cityIds)
-        {
-            return cityIds.Trim('[', ']').Split(',').Select(id => int.Parse(id.Trim())).ToList();
-        }
-
-        private List<int> ParseMileage(string mileage)
-        {
-            return mileage.Trim('[', ']').Split(',').Select(m => int.Parse(m.Trim())).ToList();
         }
 
         private List<int> ParseCityIds(string cityIds)
@@ -311,4 +220,3 @@ namespace API.Controllers
         }
     }
 }
-

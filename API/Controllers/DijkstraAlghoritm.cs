@@ -1,17 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using API.Models;
-using API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Neo4jClient;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Microsoft.Extensions.Hosting;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using System.Text;
-using Npgsql;
-
 
 namespace API.Controllers
 {
@@ -20,83 +14,95 @@ namespace API.Controllers
     public class DijkstraAlgorithm : ControllerBase
     {
         private readonly IGraphClient _client;
-        private readonly ICacheService _cacheService;
 
-        public DijkstraAlgorithm(IGraphClient client, ICacheService cacheService)
+        public DijkstraAlgorithm(IGraphClient client)
         {
             _client = client;
-            _cacheService = cacheService;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> FindShortestPath(int startCityId, int endCityId)
+    [HttpGet]
+    public async Task<IActionResult> FindShortestPath(int startCityId, int endCityId)
+    {
+        try
         {
-            try
-            {
-                var minMileage = 1000;
-
-                var query = _client
-                    .Cypher.Match(
-                        "p=shortestPath((start_city:City {city_id: "
-                            + startCityId
-                            + "})-[*]-(end_city:City {city_id: "
-                            + endCityId
-                            + "}))"
-                    )
-                    .Where("ALL(rel IN relationships(p) WHERE rel.mileage <= " + minMileage + ")")
-                    .WithParam("startCityId", startCityId)
-                    .WithParam("endCityId", endCityId)
-                    .WithParam("minMileage", minMileage)
-                    .Return<object>("p");
-
-                // Deserialize the result into a dynamic object (plaky)
-                var queryResult = await query.ResultsAsync; // Await the asynchronous call
-                var result = queryResult?.FirstOrDefault();
-                Console.WriteLine(result);
-                if (result != null)
+            var query = _client.Cypher
+                .Match(
+                    "p=shortestPath((start_city:City {city_id: " + startCityId + "})-[:HAS_ROUTE*]-(end_city:City {city_id: " + endCityId + "}))"
+                )
+                .With("p, nodes(p) AS nodes, relationships(p) AS rels")
+                .Return((p, nodes, rels) => new
                 {
-                    var resultJson = JsonConvert.SerializeObject(result);
-                    Console.WriteLine(resultJson);
-                    var deserializedResult = JsonConvert.DeserializeObject<dynamic>(resultJson);
+                    Path = p.As<GraphInfo>(), // Change this to GraphInfo or a custom DTO
+                    Nodes = nodes.As<List<NodeInfo>>(),
+                    Relationships = rels.As<List<RelationshipInfo>>()
+                });
 
-                    // Extract information from the deserialized result
-                    var startCity = deserializedResult?.start?.properties?.city_name?.ToString();
-                    var endCity = deserializedResult?.end?.properties?.city_name?.ToString();
-                    var segments = deserializedResult?.segments as JArray;
-                    var path = segments
-                        ?.Select(s => s["end"]["properties"]["city_name"].ToString())
-                        .ToList();
-                    var totalMileage = segments?.Sum(s =>
-                        (double)s["relationship"]["properties"]["mileage"]
-                    );
+            var queryResult = await query.ResultsAsync;
+            var result = queryResult?.FirstOrDefault();
 
-                    // Create a custom DTO
-                    var pathInfo = new PathInfo
-                    {
-                        StartCity = startCity,
-                        EndCity = endCity,
-                        Path = path,
-                        TotalMileage = totalMileage ?? 0.0,
-                    };
-
-                    // Return the structured response
-                    return Ok(deserializedResult);
-                }
-
-                return BadRequest("bed");
-            }
-            catch (Exception ex)
+            if (result != null)
             {
-                return BadRequest($"Error executing Dijkstra algorithm: {ex.Message}");
+                var path = result.Path;
+                var nodes = result.Nodes;
+                var relationships = result.Relationships;
+
+                // Now you can access nodes and relationships as needed
+
+                return Ok(new { Path = path, Nodes = nodes, Relationships = relationships });
             }
+
+            return BadRequest("No path found");
         }
+        catch (Exception ex)
+        {
+            return BadRequest($"Error executing Dijkstra algorithm: {ex.Message}");
+        }
+    }
+
 
         public class PathInfo
         {
-            public string StartCity { get; set; }
-            public string EndCity { get; set; }
-            public List<string> Path { get; set; }
-            public double TotalMileage { get; set; }
+            public int StartCityId { get; set; }
+            public int EndCityId { get; set; }
+            // public List<string> Path { get; set; }
+            // public double TotalMileage { get; set; }
         }
+
+        public class GraphInfo
+        {
+            public NodeInfo Start { get; set; }
+            public NodeInfo End { get; set; }
+            public List<NodeInfo> Nodes { get; set; }
+            public List<RelationshipInfo> Relationships { get; set; }
+        }
+
+        public class NodeInfo
+        {
+            public int Id { get; set; }
+            public List<string> Labels { get; set; }
+            public NodeProperties Properties { get; set; }
+        }
+
+        public class NodeProperties
+        {
+            public string CityName { get; set; }
+            public int CityId { get; set; }
+        }
+
+        public class RelationshipInfo
+        {
+            public int Id { get; set; }
+            public string Type { get; set; }
+            public int StartNodeId { get; set; }
+            public int EndNodeId { get; set; }
+            public RelationshipProperties Properties { get; set; }
+        }
+
+        public class RelationshipProperties
+        {
+            public int LineId { get; set; }
+            public int Mileage { get; set; }
+        }
+
     }
 }
