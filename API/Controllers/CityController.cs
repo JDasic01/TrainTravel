@@ -73,7 +73,6 @@ namespace API.Controllers
                     )
                     .ResultsAsync;
 
-                // Filter result to get information for the specified city_id
                 var cityInfo = result
                     .Where(item => item.City.city_id == id)
                     .Select(item => new
@@ -136,6 +135,22 @@ namespace API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            await _client
+                .Cypher
+                .Match("(start:City)-[r:HAS_ROUTE]-(end:City)")
+                .Where((City start) => start.city_id == id)
+                .OrWhere((City end) => end.city_id == id)
+                .Delete("r")
+                .ExecuteWithoutResultsAsync();
+
+            await _client
+                .Cypher
+                .Match("(start:City)-[r:HAS_LINE]-(end:City)")
+                .Where((City start) => start.city_id == id)
+                .OrWhere((City end) => end.city_id == id)
+                .Delete("r")
+                .ExecuteWithoutResultsAsync();
+
             await _client
                 .Cypher.Match("(c:City)")
                 .Where((City c) => c.city_id == id)

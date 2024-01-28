@@ -1,0 +1,66 @@
+@page "/train-routes"
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using System.Net.Http.Headers;
+@using Blazor.Data;
+@inject NavigationManager Navigation
+
+<PageTitle>Train routes</PageTitle>
+
+<h1>Train routes</h1>
+
+<a class="btn btn-primary" href="/train-routes/add" role="button">New route</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Cities</th>
+            <th scope="col">Mileage</th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var route in trainRoutes)
+        {
+            <tr>
+                <td>@route.line_id</td>
+                <td>
+                    @if (route.city_ids.Any())
+                    {
+                        @foreach (var cityId in route.city_ids)
+                        {
+                            var city = cities.FirstOrDefault(c => c.city_id == cityId);
+                            <span>@city?.city_name</span>
+                            if (cityId != route.city_ids.Last()) { <span>, </span> }
+                        }
+                    }
+                </td>
+                <td>@string.Join(", ", route.mileage)</td>
+                <td><button class="btn btn-danger" @onclick="() => DeleteData(route.line_id)">Delete</button></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private TrainRoute[] trainRoutes = new TrainRoute[0];
+    private City[] cities = new City[0];
+
+    protected override async Task OnInitializedAsync()
+    {
+        trainRoutes = await HttpClient.GetFromJsonAsync<TrainRoute[]>("http://api:8082/TrainRoute");
+        cities = await HttpClient.GetFromJsonAsync<City[]>("http://api:8082/City");
+    }
+
+    private async Task DeleteData(int id)
+    {
+        var response = await HttpClient.DeleteAsync($"http://api:8082/TrainRoute/{id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("/train-routes");
+        }
+    }
+}

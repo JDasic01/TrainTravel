@@ -6,32 +6,37 @@
 @inject NavigationManager Navigation
 
 <PageTitle>Update city</PageTitle>
+@if (isLoading)
+{
+    <p>Loading ...</p>
+}
+else
+{
+    <a class="btn btn-primary" href="/cities" role="button">Return</a>
 
-<h1>@city.city_name</h1>
-
-<a class="btn btn-primary" href="/cities" role="button">Return</a>
-
-    <form method="put"  onsubmit="@OnSubmit">
+    <form method="post" onsubmit="@OnSubmit">
         <fieldset>
-          <legend>Update city</legend>
-          <div>
-            <label for="InputName">City name:</label>
-            <input type="text" @bind="InputName"/>
-          </div>
-          <div>
-            <label>&nbsp;</label>
-            <input type="submit" value="Submit" />
-          </div>
+            <legend>Update city</legend>
+            <div>
+                <label for="InputName">City name:</label>
+                <input type="text" @bind="city.city_name" id="InputName" />
+            </div>
+            <div>
+                <label>&nbsp;</label>
+                <input type="submit" value="Submit" />
+            </div>
         </fieldset>
     </form>
 
-<p role="status">Status: @updateCityStatus</p>
+    <p role="status">Status: @updateCityStatus</p>
+}
 
 @code {
+    public bool isLoading = true;
     private bool CanUpdateCity => InputName != null && InputName != city.city_name;
 
     [Parameter]
-    public string id {get; set;}
+    public string id { get; set; }
     private City city = new City();
 
     private string updateCityStatus = "";
@@ -39,20 +44,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData();
-    }
-
-    private async Task LoadData()
-    {
         city = await HttpClient.GetFromJsonAsync<City?>($"http://api:8082/City/{id}");
+        isLoading = false;
     }
 
-    private async Task OnSubmit() {
+    private async Task OnSubmit()
+    {
         if (CanUpdateCity)
         {
-            city.city_name = InputName;
-            city.city_id = Int32.Parse(id);
-
             var response = await HttpClient.PutAsJsonAsync($"http://api:8082/City/{id}", city);
 
             if (response.IsSuccessStatusCode)

@@ -1,0 +1,79 @@
+@page "/train-routes/update/{id}"
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using System.Net.Http.Headers;
+@using Blazor.Data;
+@inject NavigationManager Navigation
+
+<PageTitle>Update Train Route</PageTitle>
+
+@if (isLoading)
+{
+    <p>Loading ...</p>
+}
+else
+{
+    <a class="btn btn-primary" href="/train-routes" role="button">Return</a>
+
+    <form method="put" onsubmit="@OnSubmit">
+        <fieldset>
+            <legend>Update Train Route</legend>
+            <div>
+                <label for="LineId">Line ID:</label>
+                <input type="number" @bind="trainRoute.line_id" />
+            </div>
+            <div>
+                <label for="CityIds">City IDs (comma-separated):</label>
+                <input type="text" @bind="cityIds" />
+            </div>
+            <div>
+                <label for="Mileage">Mileage (comma-separated):</label>
+                <input type="text" @bind="mileage" />
+            </div>
+            <div>
+                <label>&nbsp;</label>
+                <input type="submit" value="Submit" />
+            </div>
+        </fieldset>
+    </form>
+
+    <p role="status">Status: @updateRouteStatus</p>
+}
+
+@code {
+    private bool isLoading = true;
+    private TrainRoute trainRoute = new TrainRoute();
+    private string cityIds = "";
+    private string mileage = "";
+    private string updateRouteStatus = "";
+
+    [Parameter]
+    public string id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        trainRoute = await HttpClient.GetFromJsonAsync<TrainRoute>($"http://api:8082/TrainRoute/{id}");
+        isLoading = false;
+    }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            var response = await HttpClient.PutAsJsonAsync($"http://api:8082/TrainRoute/{id}", trainRoute);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/train-routes");
+            }
+            else
+            {
+                updateRouteStatus = "Failed to update train route. Please check your input.";
+            }
+        }
+        catch (Exception ex)
+        {
+            updateRouteStatus = $"Error: {ex.Message}";
+        }
+    }
+}
