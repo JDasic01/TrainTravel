@@ -54,7 +54,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        IdGenerator = new Id();
         lines = await HttpClient.GetFromJsonAsync<List<Line>>("http://api:8082/Line");
 
         var existingRoute = await HttpClient.GetFromJsonAsync<TrainRoute>($"http://api:8082/TrainRoute/{Id}");

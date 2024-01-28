@@ -57,7 +57,7 @@ namespace API.Controllers
             var trainRoute = await _client
                 .Cypher.Match("(n:TrainRoute)")
                 .OptionalMatch("(n)-[:HAS_LINE]->(city:City)")
-                .Where((TrainRoute t) => t.line_id == id)
+                .Where((TrainRoute n) => n.route_id == id)
                 .Return((n, city) => new
                 {
                     route_id = n.As<TrainRouteCSV>().route_id,
@@ -75,7 +75,7 @@ namespace API.Controllers
                 mileage = ParseMileage(route.mileage),
             });
 
-            return Ok(denormalizedRoutes);
+            return Ok(denormalizedRoutes.FirstOrDefault());
         }
 
         [HttpPost]
@@ -132,11 +132,10 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] TrainRoute trainRoute)
+        public async Task<IActionResult> Update(int id, [FromBody] TrainRouteCSV trainRoute)
         {
             try
             {
-                // Delete the existing TrainRoute node
                 await _client
                     .Cypher.Match("(t:TrainRoute)")
                     .Where((TrainRoute t) => t.route_id == id)
@@ -150,15 +149,20 @@ namespace API.Controllers
                     )
                     .WithParam("route_id", trainRoute.route_id)
                     .WithParam("line_id", trainRoute.line_id)
-                    .WithParam("city_ids", SerializeCityIds(trainRoute.city_ids))
-                    .WithParam("mileage", SerializeMileage(trainRoute.mileage))
+                    .WithParam("city_ids", trainRoute.city_ids)
+                    .WithParam("mileage", trainRoute.mileage)
                     .ExecuteWithoutResultsAsync();
-
+                
+                TrainRoute trainRoute1 = new TrainRoute();
+                trainRoute1.route_id = trainRoute.route_id;
+                trainRoute1.line_id = trainRoute.line_id;
+                trainRoute1.city_ids = ParseCityIds(trainRoute.city_ids);
+                trainRoute1.mileage = ParseMileage(trainRoute.mileage);
                 // Recreate relationships between cities based on the updated data
-                for (int i = 0; i < trainRoute.city_ids.Count - 1; i++)
+                for (int i = 0; i < trainRoute1.city_ids.Count - 1; i++)
                 {
-                    int currentCityId = trainRoute.city_ids[i];
-                    int nextCityId = trainRoute.city_ids[i + 1];
+                    int currentCityId = trainRoute1.city_ids[i];
+                    int nextCityId = trainRoute1.city_ids[i + 1];
 
                     await _client
                         .Cypher.Match(
@@ -169,7 +173,7 @@ namespace API.Controllers
                             $"(c{currentCityId})-[r{currentCityId}{nextCityId}:HAS_ROUTE]->(c{nextCityId})"
                         )
                         .Set(
-                            $"r{currentCityId}{nextCityId} = {{ mileage: {trainRoute.mileage[i]}, line_id: {trainRoute.line_id} }}"
+                            $"r{currentCityId}{nextCityId} = {{ mileage: {trainRoute1.mileage[i]}, line_id: {trainRoute1.line_id} }}"
                         )
                         .ExecuteWithoutResultsAsync();
 
@@ -182,7 +186,7 @@ namespace API.Controllers
                             $"(c{nextCityId})-[r{nextCityId}{currentCityId}:HAS_ROUTE]->(c{currentCityId})"
                         )
                         .Set(
-                            $"r{nextCityId}{currentCityId} = {{ mileage: {trainRoute.mileage[i]}, line_id: {trainRoute.line_id} }}"
+                            $"r{nextCityId}{currentCityId} = {{ mileage: {trainRoute1.mileage[i]}, line_id: {trainRoute1.line_id} }}"
                         )
                         .ExecuteWithoutResultsAsync();
                 }
