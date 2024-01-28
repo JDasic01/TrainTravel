@@ -1,33 +1,41 @@
-﻿@page "/cities"
+﻿@page "/cities/update/{id}"
 @inject HttpClient HttpClient
 @using System.Net.Http.Json;
 @using System.Net.Http.Headers;
 @using Blazor.Data;
+@inject NavigationManager Navigation
 
-<PageTitle>Cities</PageTitle>
+<PageTitle>Update city</PageTitle>
 
-<h1>Cities</h1>
+<h1>@city.city_name</h1>
 
-<a class="btn btn-primary" href="/cities/add" role="button">New city</a>
+<a class="btn btn-primary" href="/cities" role="button">Return</a>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th scope="col">Name</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var city in cities)
-            {
-            <tr>
-                    <td>@city.city_name</td>
-            </tr>
-            }
-        </tbody>
-    </table>
+    <form method="put"  onsubmit="@OnSubmit">
+        <fieldset>
+          <legend>Update city</legend>
+          <div>
+            <label for="InputName">City name:</label>
+            <input type="text" @bind="InputName"/>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <input type="submit" value="Submit" />
+          </div>
+        </fieldset>
+    </form>
+
+<p role="status">Status: @updateCityStatus</p>
 
 @code {
-    private City[] cities = new City[0];
+    private bool CanUpdateCity => InputName != null && InputName != city.city_name;
+
+    [Parameter]
+    public string id {get; set;}
+    private City city = new City();
+
+    private string updateCityStatus = "";
+    private string? InputName { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -36,6 +44,25 @@
 
     private async Task LoadData()
     {
-        cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
+        city = await HttpClient.GetFromJsonAsync<City?>($"http://api:8082/City/{id}");
+    }
+
+    private async Task OnSubmit() {
+        if (CanUpdateCity)
+        {
+            city.city_name = InputName;
+            city.city_id = Int32.Parse(id);
+
+            var response = await HttpClient.PutAsJsonAsync($"http://api:8082/City/{id}", city);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/cities");
+            }
+        }
+        else
+        {
+            updateCityStatus = "Please change city name!";
+        }
     }
 }

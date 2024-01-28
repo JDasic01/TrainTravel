@@ -14,6 +14,9 @@
         <thead>
             <tr>
                 <th scope="col">Name</th>
+                <th scope="col">Id</th>
+                <th></th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -21,6 +24,9 @@
             {
             <tr>
                     <td>@city.city_name</td>
+                    <td>@city.city_id</td>
+                    <td><a class="btn btn-secondary" href="/cities/update/@city.city_id" role="button">Update</a></td>
+                    <td><a class="btn btn-secondary" href="/cities/delete/@city.city_id" role="button">Delete</a></td>
             </tr>
             }
         </tbody>

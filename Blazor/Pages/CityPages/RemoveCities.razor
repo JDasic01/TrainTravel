@@ -1,33 +1,26 @@
-﻿@page "/cities"
+﻿@page "/cities/delete/{id}"
+@inject NavigationManager Navigation
 @inject HttpClient HttpClient
 @using System.Net.Http.Json;
 @using System.Net.Http.Headers;
 @using Blazor.Data;
 
-<PageTitle>Cities</PageTitle>
+<PageTitle>Delete</PageTitle>
 
-<h1>Cities</h1>
+<h1>@city.city_name</h1>
 
-<a class="btn btn-primary" href="/cities/add" role="button">New city</a>
+<a class="btn btn-primary" href="/cities" role="button">Return</a>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th scope="col">Name</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var city in cities)
-            {
-            <tr>
-                    <td>@city.city_name</td>
-            </tr>
-            }
-        </tbody>
-    </table>
+<p>delete city @city.city_name</p>
+
+<button class="btn btn-primary" @onclick="DeleteCity" disabled="@(!CanDeleteCity)">Delete</button>
 
 @code {
-    private City[] cities = new City[0];
+    private bool CanDeleteCity => city != null;
+
+    [Parameter]
+    public string id {get; set;}
+    private City city = new City();
 
     protected override async Task OnInitializedAsync()
     {
@@ -36,6 +29,16 @@
 
     private async Task LoadData()
     {
-        cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
+        city = await HttpClient.GetFromJsonAsync<City?>($"http://api:8082/City/{id}");
+    }
+
+    private async Task DeleteCity()
+    {
+        var response = await HttpClient.DeleteAsync($"http://api:8082/City/{id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("/cities");
+        }
     }
 }
