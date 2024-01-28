@@ -9,9 +9,9 @@ public class Neo4jService : IDisposable
         _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
     }
 
-    public IAsyncSession GetSession()
+    public IAsyncSession GetSession(string dbname)
     {
-        return _driver.AsyncSession();
+        return _driver.AsyncSession(o => o.WithDatabase(dbname));
     }
 
     public void Dispose()

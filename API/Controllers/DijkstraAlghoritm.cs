@@ -6,6 +6,7 @@ using API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Neo4jClient;
 using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 
 namespace API.Controllers
 {
@@ -14,50 +15,67 @@ namespace API.Controllers
     public class DijkstraAlgorithm : ControllerBase
     {
         private readonly IGraphClient _client;
+        private readonly Neo4jService _driver;
+        private readonly ILogger<CSVFileController> _logger;
 
-        public DijkstraAlgorithm(IGraphClient client)
+        public DijkstraAlgorithm(IGraphClient client, ILogger<CSVFileController> logger, Neo4jService driver)
         {
             _client = client;
+            _driver = driver;
+            _logger = logger;
         }
 
-    [HttpGet]
-    public async Task<IActionResult> FindShortestPath(int startCityId, int endCityId)
-    {
-        try
+        [HttpGet]
+        public async Task<IActionResult> FindShortestPath(int startCityId, int endCityId)
         {
-            var query = _client.Cypher
-                .Match(
-                    "p=shortestPath((start_city:City {city_id: " + startCityId + "})-[:HAS_ROUTE*]-(end_city:City {city_id: " + endCityId + "}))"
-                )
-                .With("p, nodes(p) AS nodes, relationships(p) AS rels")
-                .Return((p, nodes, rels) => new
-                {
-                    Path = p.As<GraphInfo>(), // Change this to GraphInfo or a custom DTO
-                    Nodes = nodes.As<List<NodeInfo>>(),
-                    Relationships = rels.As<List<RelationshipInfo>>()
-                });
-
-            var queryResult = await query.ResultsAsync;
-            var result = queryResult?.FirstOrDefault();
-
-            if (result != null)
+            var session = _driver.GetSession("neo4j");
+            try
             {
-                var path = result.Path;
-                var nodes = result.Nodes;
-                var relationships = result.Relationships;
+                
+                var query = await session.RunAsync(
+                        "MATCH p=shortestPath((start_city:City {city_id: \" + startCityId + \"})-[:HAS_ROUTE*]-(end_city:City {city_id: \" + endCityId + \"}))\n " +
+                        "WITH p, nodes(p) AS nodes, relationships(p) AS rels\n " +
+                        "UNWIND nodes as node\n " +
+                        "RETURN p, collect(properties(node)) as n, rels\n");
 
-                // Now you can access nodes and relationships as needed
+                // _logger.LogInformation(query);
+                //_client.Cypher
+                //.Match(
+                //    "p=shortestPath((start_city:City {city_id: " + startCityId + "})-[:HAS_ROUTE*]-(end_city:City {city_id: " + endCityId + "}))"
+                //)
+                //.With("p, nodes(p) AS nodes, relationships(p) AS rels")
+                //.Return((p, nodes, rels) => new
+                //{
+                //    Path = p.As<GraphInfo>(), // Change this to GraphInfo or a custom DTO
+                //    Nodes = nodes.As<IEnumerable<NodeInfo>>(),
+                //    Relationships = rels.As<List<RelationshipInfo>>()
+                //});
 
-                return Ok(new { Path = path, Nodes = nodes, Relationships = relationships });
+                //var queryResult = await query.ResultsAsync;
+                //var result = query?.FirstOrDefault();
+
+                if (query != null)
+                {
+                    var path = result.Path;
+                    var nodes = result.Nodes;
+                    var relationships = result.Relationships;
+
+                    // Now you can access nodes and relationships as needed
+
+                    return Ok(new { Path = path, Nodes = nodes, Relationships = relationships });
+                }
+
+                return BadRequest("No path found");
             }
-
-            return BadRequest("No path found");
+            catch (Exception ex)
+            {
+                return BadRequest($"Error executing Dijkstra algorithm: {ex.Message}");
+            }
+            finally
+            {
+                await session.CloseAsync();
+            }
         }
-        catch (Exception ex)
-        {
-            return BadRequest($"Error executing Dijkstra algorithm: {ex.Message}");
-        }
-    }
 
 
         public class PathInfo
@@ -80,7 +98,12 @@ namespace API.Controllers
         {
             public int Id { get; set; }
             public List<string> Labels { get; set; }
+
+            [JsonIgnore]
             public NodeProperties Properties { get; set; }
+
+            [JsonProperty("properties")]
+            private NodeProperties propertiesSetter { set { Properties = value; } }
         }
 
         public class NodeProperties

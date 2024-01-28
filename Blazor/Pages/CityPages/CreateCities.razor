@@ -34,25 +34,11 @@
 
     private string? InputName { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadData();
-    }
-
-    private async Task LoadData()
-    {
-        cities = await HttpClient.GetFromJsonAsync<City[]>("http://api:8082/City");
-    }
-
     private async Task OnSubmit()
     {
         if (CanCreateCity)
         {
-            await LoadData();
-
-            int maxId = cities.Length > 0 ? cities.Max(city => city.city_id) : 101;
-
-            newCity.city_id = maxId > 100 ? maxId + 1 : 102;
+            newCity.city_id = generateId();
             newCity.city_name = InputName;
 
             var response = await HttpClient.PostAsJsonAsync("http://api:8082/City", newCity);
@@ -70,5 +56,11 @@
         {
             createCityStatus = "Please write the city name!";
         }
+    }
+
+    private static int id = 1;
+    static int generateId()
+    {
+        return id++;
     }
 }
