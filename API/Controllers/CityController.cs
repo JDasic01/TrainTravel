@@ -31,25 +31,10 @@ namespace API.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var cachedCities = await _cacheService.GetRequest<IEnumerable<City>>(
-                _cacheService.city_db_name
-            );
-
-            if (cachedCities != null && cachedCities.Any())
-            {
-                return Ok(cachedCities);
-            }
-
             var cities = await _client
                 .Cypher.Match("(n:City)")
                 .Return(n => n.As<City>())
                 .ResultsAsync;
-
-            _cacheService.SetData(
-                _cacheService.city_db_name,
-                cities,
-                DateTimeOffset.Now.AddSeconds(30)
-            );
 
             return Ok(cities);
         }
@@ -111,9 +96,6 @@ namespace API.Controllers
                 .Cypher.Create("(c:City $city)")
                 .WithParam("city", city)
                 .ExecuteWithoutResultsAsync();
-
-            _cacheService.PostRequest(_cacheService.city_db_name, city.city_id, city);
-
             return Ok();
         }
 
@@ -126,9 +108,6 @@ namespace API.Controllers
                 .Set("c = $city")
                 .WithParam("city", city)
                 .ExecuteWithoutResultsAsync();
-
-            _cacheService.PostRequest(_cacheService.city_db_name, id, city);
-
             return Ok();
         }
 
@@ -156,9 +135,6 @@ namespace API.Controllers
                 .Where((City c) => c.city_id == id)
                 .Delete("c")
                 .ExecuteWithoutResultsAsync();
-
-            _cacheService.DeleteRequest(_cacheService.city_db_name, id);
-
             return Ok();
         }
     }
