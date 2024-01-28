@@ -1,0 +1,44 @@
+﻿@page "/cities/delete/{id}"
+@inject NavigationManager Navigation
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using System.Net.Http.Headers;
+@using Blazor.Data;
+
+<PageTitle>Delete</PageTitle>
+
+<h1>@city.city_name</h1>
+
+<a class="btn btn-primary" href="/cities" role="button">Return</a>
+
+<p>delete city @city.city_name</p>
+
+<button class="btn btn-primary" @onclick="DeleteCity" disabled="@(!CanDeleteCity)">Delete</button>
+
+@code {
+    private bool CanDeleteCity => city != null;
+
+    [Parameter]
+    public string id {get; set;}
+    private City city = new City();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        city = await HttpClient.GetFromJsonAsync<City?>($"http://api:8082/City/{id}");
+    }
+
+    private async Task DeleteCity()
+    {
+        var response = await HttpClient.DeleteAsync($"http://api:8082/City/{id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("/cities");
+        }
+    }
+}

@@ -4,16 +4,19 @@
 @using System.Net.Http.Headers;
 @using Blazor.Data;
 
-<PageTitle>cities</PageTitle>
+<PageTitle>Cities</PageTitle>
 
-<h1>cities</h1>
+<h1>Cities</h1>
 
-<a class="btn btn-primary" href="/cities/add" role="button">New cities</a>
+<a class="btn btn-primary" href="/cities/add" role="button">New city</a>
 
-    <!-- <table class="table">
+    <table class="table">
         <thead>
             <tr>
                 <th scope="col">Name</th>
+                <th scope="col">Id</th>
+                <th></th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -21,6 +24,9 @@
             {
             <tr>
                     <td>@city.city_name</td>
+                    <td>@city.city_id</td>
+                    <td><a class="btn btn-secondary" href="/cities/update/@city.city_id" role="button">Update</a></td>
+                    <td><a class="btn btn-secondary" href="/cities/delete/@city.city_id" role="button">Delete</a></td>
             </tr>
             }
         </tbody>
@@ -38,4 +44,4 @@
     {
         cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
     }
-} -->
+}
