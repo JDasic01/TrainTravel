@@ -1,1 +1,90 @@
-﻿
+﻿@page "/find-shortest-path"
+
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using System.Collections.Generic;
+@using Blazor.Data;
+
+<PageTitle>City Graph</PageTitle>
+
+<h1>City Graph</h1>
+
+
+<form method="post" onsubmit="@OnSubmit">
+    <fieldset>
+        <legend>Find shortest path</legend>
+        <div>
+            <label for="CityId1">Select start city:</label>
+            <select @bind="selectedCityId1">
+                @foreach (var city in cities)
+                {
+                    <option value="@city.city_id">@city.city_name ID: @selectedCityId1</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label for="CityId1">Select end city:</label>
+            <select @bind="selectedCityId2">
+                @foreach (var city in cities)
+                {
+                    <option value="@city.city_id">@city.city_name ID: @selectedCityId2</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <input type="submit" value="Submit" />
+            <p role="status">Status: @selectStatus</p>
+        </div>
+    </fieldset>
+</form>
+<br />
+<h2>Start city: @start_city?.city_name</h2>
+<h2>End city:  @end_city?.city_name</h2>
+
+@foreach(var station in stations){
+    <p>Stations: @station?.city_name</p>
+}
+
+
+@code {
+    private Root root = new Root();
+    private Path path = new Path();
+    private Node end = new Node();
+    private List<Node> nodes = new List<Node>();
+    private City[] cities = new City[0];
+    private City start_city = new City();
+    private City end_city = new City();
+    private string selectStatus = "";
+    private List<City> stations = new List<City>();
+
+    private int selectedCityId1;
+    private int selectedCityId2;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
+    }
+
+    private async Task OnSubmit()
+    {
+        if(selectedCityId1!=null && selectedCityId2!=null && selectedCityId1!=selectedCityId2){
+            selectStatus = "Cities are selected!";
+            try{
+                root = await HttpClient.GetFromJsonAsync<Root?>($"http://api:8082/find-shortest-path?startCityId={selectedCityId1.ToString()}&endCityId={selectedCityId2.ToString()}");
+                path = root.path;
+                start_city = cities.FirstOrDefault(city => city.city_id == path.start?.id);
+                end_city = cities.FirstOrDefault(city => city.city_id == path.end?.id);
+                nodes = path.nodes;
+                stations = path.nodes.Select(node => cities.FirstOrDefault(city => city.city_id == node.id)).ToList();
+            }
+            catch (Exception ex)
+            {
+                selectStatus = $"No path between cities!\n{ex.Message}";
+            }
+        }
+        else {
+            selectStatus = "Both cities need to be selected and different!";
+        }
+    }
+}

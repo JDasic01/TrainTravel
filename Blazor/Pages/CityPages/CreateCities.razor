@@ -38,8 +38,8 @@
     {
         if (CanCreateCity)
         {
-            new_city.city_id = generateId();
-            new_city.city_name = InputName;
+            newCity.city_id = generateId();
+            newCity.city_name = InputName;
 
             var response = await HttpClient.PostAsJsonAsync("http://api:8082/City", newCity);
 
