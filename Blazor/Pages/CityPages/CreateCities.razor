@@ -1,26 +1,24 @@
 ﻿@page "/cities/add"
 @inject HttpClient HttpClient
 @using System.Net.Http.Json;
-@using System.Net.Http.Headers;
 @using Blazor.Data;
 @inject NavigationManager Navigation
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Create City</PageTitle>
 
-<h1>Create city</h1>
+<h1>Create City</h1>
 
 <a class="btn btn-primary" href="/cities" role="button">Return</a>
 
 <form method="post" onsubmit="@OnSubmit">
     <fieldset>
-        <legend>Add city</legend>
-        <div>
-            <label for="InputName">City name:</label>
-            <input type="text" @bind="InputName" />
+        <legend>Add City</legend>
+        <div class="form-group">
+            <label for="InputName">City Name:</label>
+            <input class="form-control" type="text" @bind="InputName" />
         </div>
-        <div>
-            <label>&nbsp;</label>
-            <input type="submit" value="Submit" />
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary" disabled="@(!CanCreateCity)">Submit</button>
         </div>
     </fieldset>
 </form>
@@ -31,7 +29,7 @@
     private bool CanCreateCity => !string.IsNullOrWhiteSpace(InputName);
 
     private City[] cities = new City[0];
-    private City new_city = new City();
+    private City newCity = new City();
     private string createCityStatus = "";
 
     private string? InputName { get; set; }
@@ -43,7 +41,7 @@
 
     private async Task LoadData()
     {
-        cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
+        cities = await HttpClient.GetFromJsonAsync<City[]>("http://api:8082/City");
     }
 
     private async Task OnSubmit()
@@ -52,21 +50,25 @@
         {
             await LoadData();
 
-            int max_id = cities.Length > 0 ? cities.Max(city => city.city_id) : 101;
+            int maxId = cities.Length > 0 ? cities.Max(city => city.city_id) : 101;
 
-            new_city.city_id = max_id > 100 ? max_id + 1 : 102;
-            new_city.city_name = InputName;
+            newCity.city_id = maxId > 100 ? maxId + 1 : 102;
+            newCity.city_name = InputName;
 
-            var response = await HttpClient.PostAsJsonAsync("http://api:8082/City", new_city);
+            var response = await HttpClient.PostAsJsonAsync("http://api:8082/City", newCity);
 
             if (response.IsSuccessStatusCode)
             {
                 Navigation.NavigateTo("/cities");
             }
+            else
+            {
+                createCityStatus = "Failed to create city. Please try again.";
+            }
         }
         else
         {
-            createCityStatus = "Please write city name!";
+            createCityStatus = "Please write the city name!";
         }
     }
 }

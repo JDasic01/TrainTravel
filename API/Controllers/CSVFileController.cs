@@ -132,6 +132,7 @@ namespace API.Controllers
                     {
                         var trainRoute = new TrainRoute
                         {
+                            route_id = trainRouteRecord.route_id,
                             line_id = trainRouteRecord.line_id,
                             city_ids = ParseCityIds(trainRouteRecord.city_ids),
                             mileage = ParseMileage(trainRouteRecord.mileage),
@@ -139,14 +140,14 @@ namespace API.Controllers
 
                         await _client
                             .Cypher.Create(
-                                "(t:TrainRoute {line_id: $line_id, city_ids: $city_ids, mileage: $mileage})"
+                                "(t:TrainRoute {route_id: $route_id, line_id: $line_id, city_ids: $city_ids, mileage: $mileage})"
                             )
+                            .WithParam("route_id", trainRoute.route_id)
                             .WithParam("line_id", trainRoute.line_id)
                             .WithParam("city_ids", trainRouteRecord.city_ids)
                             .WithParam("mileage", trainRouteRecord.mileage)
                             .ExecuteWithoutResultsAsync();
 
-                        // Create relationships between cities based on the city_ids and mileage
                         for (int i = 0; i < trainRoute.city_ids.Count - 1; i++)
                         {
                             int currentCityId = trainRoute.city_ids[i];

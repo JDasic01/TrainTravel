@@ -1,9 +1,5 @@
 namespace Blazor.Data;
 
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
 public class Line
 {
     public int line_id { get; set; }

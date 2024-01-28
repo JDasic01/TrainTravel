@@ -47,7 +47,7 @@
 
         if (response.IsSuccessStatusCode)
         {
-            Navigation.NavigateTo("/cities");
+            Navigation.NavigateTo("/cities", forceLoad: true);
         }
     }
 }

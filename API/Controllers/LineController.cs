@@ -31,24 +31,48 @@ namespace API.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var lines = await _client
-                .Cypher.Match("(n:Line)")
-                .Return(n => n.As<Line>())
+            var relations = await _client
+                .Cypher
+                .Match("(c1:City)-[r:HAS_LINE]->(c2:City)")
+                .Return((c1, r, c2) => new
+                {
+                    line_id = r.As<Line>().line_id,
+                    line_name = r.As<Line>().line_name,
+                    start_city_id = c1.As<City>().city_id,
+                    end_city_id = c2.As<City>().city_id
+                })
                 .ResultsAsync;
 
-            return Ok(lines);
+            return Ok(relations);
         }
+
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var line = await _client
-                .Cypher.Match("(l:Line)")
-                .Where((Line l) => l.line_id == id)
-                .Return(l => l.As<Line>())
+            var lineInfo = await _client
+                .Cypher
+                .Match("(c1:City)-[r:HAS_LINE]->(c2:City)")
+                .Where((Line r) => r.line_id == id)
+                .Return((c1, r, c2) => new
+                {
+                    line_id = r.As<Line>().line_id,
+                    line_name = r.As<Line>().line_name,
+                    start_city_id = c1.As<City>().city_id,
+                    end_city_id = c2.As<City>().city_id
+                })
                 .ResultsAsync;
 
-            return Ok(line.LastOrDefault());
+            var line = lineInfo.FirstOrDefault(); 
+
+            if (line != null)
+            {
+                return Ok(line);
+            }
+            else
+            {
+                return NotFound(); 
+            }
         }
 
         [HttpPost]

@@ -25,9 +25,9 @@
         @foreach (var route in trainRoutes)
         {
             <tr>
-                <td>@route.line_id</td>
+                <td>@lines.FirstOrDefault(l => l.line_id == route.line_id)?.line_name</td>
                 <td>
-                    @if (route.city_ids.Any())
+                    @if (route.city_ids != null && route.city_ids.Any())
                     {
                         @foreach (var cityId in route.city_ids)
                         {
@@ -38,7 +38,8 @@
                     }
                 </td>
                 <td>@string.Join(", ", route.mileage)</td>
-                <td><button class="btn btn-danger" @onclick="() => DeleteData(route.line_id)">Delete</button></td>
+                <td><a class="btn btn-secondary" href="/train-routes/update/@route.route_id" role="button">Update</a></td>
+                <td><button class="btn btn-danger" @onclick="() => DeleteData(route.route_id)">Delete</button></td>
             </tr>
         }
     </tbody>
@@ -47,11 +48,13 @@
 @code {
     private TrainRoute[] trainRoutes = new TrainRoute[0];
     private City[] cities = new City[0];
+    private Line[] lines = new Line[0];
 
     protected override async Task OnInitializedAsync()
     {
         trainRoutes = await HttpClient.GetFromJsonAsync<TrainRoute[]>("http://api:8082/TrainRoute");
         cities = await HttpClient.GetFromJsonAsync<City[]>("http://api:8082/City");
+        lines = await HttpClient.GetFromJsonAsync<Line[]>("http://api:8082/Line");
     }
 
     private async Task DeleteData(int id)
@@ -60,7 +63,7 @@
 
         if (response.IsSuccessStatusCode)
         {
-            Navigation.NavigateTo("/train-routes");
+            Navigation.NavigateTo("/train-routes", forceLoad: true);
         }
     }
 }

@@ -1,4 +1,5 @@
-@page "/train-routes/create"
+@page "/train-routes/add"
+@inject Id IdGenerator
 @inject HttpClient HttpClient
 @using System.Net.Http.Json;
 @using System.Net.Http.Headers;
@@ -15,8 +16,13 @@
     <fieldset>
         <legend>Train Route Details</legend>
         <div>
-            <label for="LineId">Line ID:</label>
-            <input type="number" @bind="trainRoute.line_id" />
+            <label for="LineId">Select Line:</label>
+            <select @bind="selectedLineId">
+                @foreach (var line in lines)
+                {
+                    <option value="@line.line_id">@line.line_name</option>
+                }
+            </select>
         </div>
         <div>
             <label for="CityIds">City IDs (comma-separated):</label>
@@ -36,15 +42,28 @@
 <p role="status">Status: @createRouteStatus</p>
 
 @code {
-    private TrainRoute trainRoute = new TrainRoute();
+    private TrainRouteCreate trainRoute = new TrainRouteCreate();
     private string cityIds = "";
     private string mileage = "";
     private string createRouteStatus = "";
+    private List<Line> lines = new List<Line>();
+    private int selectedLineId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IdGenerator = new Id();
+        lines = await HttpClient.GetFromJsonAsync<List<Line>>("http://api:8082/Line");
+    }
 
     private async Task OnSubmit()
     {
         try
         {
+            trainRoute.route_id = IdGenerator.EntityId;
+            trainRoute.line_id = selectedLineId; 
+            trainRoute.city_ids = cityIds;
+            trainRoute.mileage = mileage;
+
             var response = await HttpClient.PostAsJsonAsync("http://api:8082/TrainRoute", trainRoute);
 
             if (response.IsSuccessStatusCode)
@@ -53,7 +72,9 @@
             }
             else
             {
-                createRouteStatus = "Failed to create train route. Please check your input.";
+                // Read and display the error message from the response
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                createRouteStatus = $"Error: {errorMessage}";
             }
         }
         catch (Exception ex)

@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Blazor.Data;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -9,8 +5,10 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddHttpClient("API", client => 
 {
-    client.BaseAddress = new Uri("http://localhost:8082");
+    client.BaseAddress = new Uri("http://api:8082");
 });
+
+builder.Services.AddSingleton<Id>();
 
 var app = builder.Build();
 

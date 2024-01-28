@@ -1,4 +1,5 @@
 @page "/train-routes/update/{id}"
+@inject Id IdGenerator
 @inject HttpClient HttpClient
 @using System.Net.Http.Json;
 @using System.Net.Http.Headers;
@@ -7,60 +8,79 @@
 
 <PageTitle>Update Train Route</PageTitle>
 
-@if (isLoading)
-{
-    <p>Loading ...</p>
-}
-else
-{
-    <a class="btn btn-primary" href="/train-routes" role="button">Return</a>
+<h1>Update Train Route</h1>
 
-    <form method="put" onsubmit="@OnSubmit">
-        <fieldset>
-            <legend>Update Train Route</legend>
-            <div>
-                <label for="LineId">Line ID:</label>
-                <input type="number" @bind="trainRoute.line_id" />
-            </div>
-            <div>
-                <label for="CityIds">City IDs (comma-separated):</label>
-                <input type="text" @bind="cityIds" />
-            </div>
-            <div>
-                <label for="Mileage">Mileage (comma-separated):</label>
-                <input type="text" @bind="mileage" />
-            </div>
-            <div>
-                <label>&nbsp;</label>
-                <input type="submit" value="Submit" />
-            </div>
-        </fieldset>
-    </form>
+<a class="btn btn-primary" href="/train-routes" role="button">Return</a>
 
-    <p role="status">Status: @updateRouteStatus</p>
-}
+<form method="post" onsubmit="@OnSubmit">
+    <fieldset>
+        <legend>Train Route Details</legend>
+        <div>
+            <label for="LineId">Select Line:</label>
+            <select @bind="selectedLineId">
+                @foreach (var line in lines)
+                {
+                    <option value="@line.line_id">@line.line_name</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label for="CityIds">City IDs (comma-separated):</label>
+            <input type="text" @bind="cityIds" />
+        </div>
+        <div>
+            <label for="Mileage">Mileage (comma-separated):</label>
+            <input type="text" @bind="mileage" />
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <input type="submit" value="Update" />
+        </div>
+    </fieldset>
+</form>
+
+<p role="status">Status: @updateRouteStatus</p>
 
 @code {
-    private bool isLoading = true;
-    private TrainRoute trainRoute = new TrainRoute();
+    private TrainRouteCreate updatedTrainRoute = new TrainRouteCreate();
     private string cityIds = "";
     private string mileage = "";
     private string updateRouteStatus = "";
+    private List<Line> lines = new List<Line>();
+    private int selectedLineId;
 
     [Parameter]
-    public string id { get; set; }
+    public string Id { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        trainRoute = await HttpClient.GetFromJsonAsync<TrainRoute>($"http://api:8082/TrainRoute/{id}");
-        isLoading = false;
+        IdGenerator = new Id();
+        lines = await HttpClient.GetFromJsonAsync<List<Line>>("http://api:8082/Line");
+
+        var existingRoute = await HttpClient.GetFromJsonAsync<TrainRoute>($"http://api:8082/TrainRoute/{Id}");
+
+        if (existingRoute != null)
+        {
+            selectedLineId = existingRoute.line_id;
+            cityIds = SerializeCityIds(existingRoute.city_ids);
+            mileage = SerializeMileage(existingRoute.mileage);
+        }
+        else
+        {
+            Navigation.NavigateTo("/train-routes");
+        }
     }
 
     private async Task OnSubmit()
     {
         try
         {
-            var response = await HttpClient.PutAsJsonAsync($"http://api:8082/TrainRoute/{id}", trainRoute);
+            updatedTrainRoute.route_id = int.Parse(Id);
+            updatedTrainRoute.line_id = selectedLineId; 
+            updatedTrainRoute.city_ids = cityIds;
+            updatedTrainRoute.mileage = mileage;
+
+            var response = await HttpClient.PutAsJsonAsync($"http://api:8082/TrainRoute/{Id}", updatedTrainRoute);
 
             if (response.IsSuccessStatusCode)
             {
@@ -68,12 +88,23 @@ else
             }
             else
             {
-                updateRouteStatus = "Failed to update train route. Please check your input.";
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                updateRouteStatus = $"Error: {errorMessage}";
             }
         }
         catch (Exception ex)
         {
             updateRouteStatus = $"Error: {ex.Message}";
         }
+    }
+
+    private string SerializeCityIds(List<int> cityIds)
+    {
+        return string.Join(",", cityIds);
+    }
+
+    private string SerializeMileage(List<int> mileage)
+    {
+        return string.Join(",", mileage);
     }
 }
