@@ -10,9 +10,6 @@ RUN dotnet restore
 # Copy the remaining files
 COPY . ./
 
-# Add EF Core tools to PATH
-ENV PATH="${PATH}:/root/.dotnet/tools"
-
 RUN dotnet add package Npgsql --version 7.0.0
 RUN dotnet add package RabbitMQ.Client --version 6.8.1
 RUN dotnet add package Newtonsoft.Json --version 13.0.3
