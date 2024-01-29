@@ -15,12 +15,12 @@ namespace API.Controllers
     {
         private readonly IGraphClient _client;
         private readonly ICacheService _cacheService;
-        private readonly IMessageService<Line> _messageService;
+        private readonly IMessageService<Message> _messageService;
 
         public LineController(
             IGraphClient client,
             ICacheService cacheService,
-            IMessageService<Line> messageService
+            IMessageService<Message> messageService
         )
         {
             _client = client;
@@ -97,7 +97,6 @@ namespace API.Controllers
                     $"r2 = {{ line_id: {line.line_id}, line_name: '{oppositeName}' }}"
                 )
                 .ExecuteWithoutResultsAsync();
-
             return Ok();
         }
 

@@ -31,8 +31,7 @@ public class RabbitMQMessageService<T> : IMessageService<T>, IDisposable
         _factory = factory;
         _connection = _factory.CreateConnection();
         _channel = _connection.CreateModel();
-        _channel.QueueDeclare(queue: Constants.cities_queue_name, durable: false, exclusive: false, autoDelete: false, arguments: null);
-        _channel.QueueDeclare(queue: Constants.routes_queue_name, durable: false, exclusive: false, autoDelete: false, arguments: null);
+        _channel.QueueDeclare(queue: "lines_queue", durable: false, exclusive: false, autoDelete: false, arguments: null);
     }
 
     public async Task SendMessageAsync(T message, string channel)

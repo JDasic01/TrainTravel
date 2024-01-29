@@ -1,0 +1,57 @@
+@page "/lines"
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using System.Net.Http.Headers;
+@using Blazor.Data;
+@inject NavigationManager Navigation
+
+<PageTitle>Lines</PageTitle>
+
+<h1>Lines</h1>
+
+<a class="btn btn-primary" href="/lines/add" role="button">New route</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Id</th>
+            <th scope="col">Name</th>
+            <th scope="col">Mileage</th>
+            <th scope="col">Start</th>
+            <th scope="col">End</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var line in lines)
+        {
+            <tr>
+                <td>@line.line_id</td>
+                <td>@line.line_name</td>
+                <td>@line.mileage</td>
+                <td>@line.start_city_id</td>
+                <td>@line.end_city_id</td>
+                <td><a class="btn btn-secondary" href="/lines/update/@line.line_id" role="button">Update</a></td>
+                <td><button class="btn btn-danger" @onclick="() => DeleteData(line.line_id)">Delete</button></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private Line[] lines = new Line[0];
+
+    protected override async Task OnInitializedAsync()
+    {
+        lines = await HttpClient.GetFromJsonAsync<Line[]>("http://api:8082/Line");
+    }
+
+    private async Task DeleteData(int id)
+    {
+        var response = await HttpClient.DeleteAsync($"http://api:8082/Line/{id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("/lines", forceLoad: true);
+        }
+    }
+}

@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using API.Services;
+using Microsoft.Extensions.Caching.Memory;
 using API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Neo4jClient;
@@ -14,15 +10,18 @@ namespace API.Controllers
     public class TrainRouteController : ControllerBase
     {
         private readonly IGraphClient _client;
-        private readonly ICacheService _cacheService;
+        private readonly IMessageService<Message> _messageService;
+        private readonly IMemoryCache _cache;
 
         public TrainRouteController(
             IGraphClient client,
-            ICacheService cacheService
+            IMessageService<Message> messageService,
+            IMemoryCache cache
         )
         {
             _client = client;
-            _cacheService = cacheService;
+            _messageService = messageService;
+            _cache = cache;
         }
 
         [HttpGet]
@@ -82,8 +81,8 @@ namespace API.Controllers
         public async Task<IActionResult> Create([FromBody] TrainRouteCSV trainRoute)
         {
             await _client
-                            .Cypher.Create(
-                                "(t:TrainRoute {route_id: $route_id, line_id: $line_id, city_ids: $city_ids, mileage: $mileage})"
+                    .Cypher.Create(
+                           "(t:TrainRoute {route_id: $route_id, line_id: $line_id, city_ids: $city_ids, mileage: $mileage})"
                             )
                             .WithParam("route_id", trainRoute.route_id)
                             .WithParam("line_id", trainRoute.line_id)
@@ -128,6 +127,12 @@ namespace API.Controllers
                     .ExecuteWithoutResultsAsync();
             }
 
+            var first = trainRoute1.city_ids.First();
+            var last = trainRoute1.city_ids.Last();
+            var cacheKey = $"ShortestPath_{first}_{last}";
+            _cache.Remove(cacheKey);
+            await _messageService.SendMessageAsync(new Message(first, last), "line_queue");
+
             return Ok();
         }
 
@@ -142,7 +147,6 @@ namespace API.Controllers
                     .DetachDelete("t")
                     .ExecuteWithoutResultsAsync();
 
-                // Create a new TrainRoute node with updated data
                 await _client
                     .Cypher.Create(
                         "(t:TrainRoute {route_id: $route_id,line_id: $line_id, city_ids: $city_ids, mileage: $mileage})"
@@ -152,13 +156,13 @@ namespace API.Controllers
                     .WithParam("city_ids", trainRoute.city_ids)
                     .WithParam("mileage", trainRoute.mileage)
                     .ExecuteWithoutResultsAsync();
-                
+
                 TrainRoute trainRoute1 = new TrainRoute();
                 trainRoute1.route_id = trainRoute.route_id;
                 trainRoute1.line_id = trainRoute.line_id;
                 trainRoute1.city_ids = ParseCityIds(trainRoute.city_ids);
                 trainRoute1.mileage = ParseMileage(trainRoute.mileage);
-                // Recreate relationships between cities based on the updated data
+
                 for (int i = 0; i < trainRoute1.city_ids.Count - 1; i++)
                 {
                     int currentCityId = trainRoute1.city_ids[i];
@@ -190,6 +194,12 @@ namespace API.Controllers
                         )
                         .ExecuteWithoutResultsAsync();
                 }
+
+                var first = trainRoute1.city_ids.First();
+                var last = trainRoute1.city_ids.Last();
+                var cacheKey = $"ShortestPath_{first}_{last}";
+                _cache.Remove(cacheKey);
+                await _messageService.SendMessageAsync(new Message(first, last), "line_queue");
 
                 return Ok();
             }

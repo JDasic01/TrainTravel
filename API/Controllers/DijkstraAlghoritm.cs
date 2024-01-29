@@ -1,12 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using API.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Neo4jClient;
-using Newtonsoft.Json;
-using Microsoft.Extensions.Logging;
 
 namespace API.Controllers
 {
@@ -17,17 +11,26 @@ namespace API.Controllers
         private readonly IGraphClient _client;
         private readonly Neo4jService _driver;
         private readonly ILogger<CSVFileController> _logger;
+        private readonly IMemoryCache _cache;
 
-        public DijkstraAlgorithm(IGraphClient client, ILogger<CSVFileController> logger, Neo4jService driver)
+        public DijkstraAlgorithm(IGraphClient client, ILogger<CSVFileController> logger, Neo4jService driver, IMemoryCache cache)
         {
             _client = client;
             _driver = driver;
             _logger = logger;
+            _cache = cache;
         }
 
         [HttpGet]
         public async Task<IActionResult> FindShortestPath(int startCityId, int endCityId)
         {
+            var cacheKey = $"ShortestPath_{startCityId}_{endCityId}";
+            if (_cache.TryGetValue(cacheKey, out string cachedResult))
+            {
+                _logger.LogInformation("Result retrieved from cache.");
+                return Ok(cachedResult);
+            }
+
             var session = _driver.GetSession("neo4j");
             try
             {
@@ -40,7 +43,7 @@ namespace API.Controllers
                 var result = queryResult?.FirstOrDefault();
 
                 _logger.LogInformation(result);
-
+                _cache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
                 if (result != null)
                 {
                     return Ok(result);

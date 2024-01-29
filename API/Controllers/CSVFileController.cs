@@ -1,14 +1,9 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using API.Models;
 using API.Services;
 using CsvHelper;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Neo4jClient;
 
 namespace API.Controllers
@@ -19,17 +14,17 @@ namespace API.Controllers
     {
         private readonly IGraphClient _client;
         private readonly ILogger<CSVFileController> _logger;
-        private readonly ICacheService _cacheService;
+        private readonly IMemoryCache _cache;
 
         public CSVFileController(
             ILogger<CSVFileController> logger,
             IGraphClient client,
-            ICacheService cacheService
+            IMemoryCache cache
         )
         {
             _logger = logger;
             _client = client;
-            _cacheService = cacheService;
+            _cache = cache;
         }
 
         [HttpPost("upload-cities", Name = "UploadCitiesCSV")]
@@ -53,8 +48,6 @@ namespace API.Controllers
                             .Cypher.Create("(c:City $city)")
                             .WithParam("city", city)
                             .ExecuteWithoutResultsAsync();
-
-                        _cacheService.PostRequest(_cacheService.city_db_name, city.city_id, city);
                     }
                 }
 
@@ -105,8 +98,6 @@ namespace API.Controllers
                                 $"r2 = {{ line_id: {line.line_id}, line_name: '{oppositeName}' }}"
                             )
                             .ExecuteWithoutResultsAsync();
-
-                        _cacheService.PostRequest(_cacheService.route_db_name, line.line_id, line);
                     }
                 }
 
