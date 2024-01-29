@@ -17,25 +17,27 @@
         <div>
             <label for="CityId1">Select start city:</label>
             <select @bind="selectedCityId1">
+                <option value="none" selected disabled hidden>Select an Option</option>
                 @foreach (var city in cities)
                 {
-                    <option value="@city.city_id">@city.city_name ID: @selectedCityId1</option>
+                    <option value="@city.city_id">@city.city_name ID: @city.city_id</option>
                 }
             </select>
-        </div>
-        <div>
-            <label for="CityId1">Select end city:</label>
+
+            <label for="CityId2">Select end city:</label>
             <select @bind="selectedCityId2">
+                <option value="none" selected disabled hidden>Select an Option</option>
                 @foreach (var city in cities)
                 {
-                    <option value="@city.city_id">@city.city_name ID: @selectedCityId2</option>
+                    <option value="@city.city_id">@city.city_name ID: @city.city_id</option>
                 }
             </select>
-        </div>
-        <div>
-            <label>&nbsp;</label>
-            <input type="submit" value="Submit" />
-            <p role="status">Status: @selectStatus</p>
+
+            <div>
+                <label>&nbsp;</label>
+                <input type="submit" value="Submit" />
+                <p role="status">Status: @selectStatus</p>
+            </div>
         </div>
     </fieldset>
 </form>
@@ -45,7 +47,8 @@
 <h2>End city: @end_prop.city_name</h2>
 <br />
 <h3>
-    @string.Join(" -> ", nodes.Where(node => node?.Properties?.city_name != null).Select(node => node.Properties.city_name))
+    @string.Join(" -> ", nodes.Where(node => node?.Properties?.city_name != null).Select(node =>
+            node.Properties.city_name))
 </h3>
 <hr3>Total mileage: @mileage km</hr3>
 
@@ -74,10 +77,13 @@
 
     private async Task OnSubmit()
     {
-        if(selectedCityId1!=null && selectedCityId2!=null && selectedCityId1!=selectedCityId2){
+        if (selectedCityId1 != null && selectedCityId2 != null && selectedCityId1 != selectedCityId2)
+        {
             selectStatus = "Cities are selected!";
-            try{
-                root = await HttpClient.GetFromJsonAsync<Root>($"http://api:8082/find-shortest-path?startCityId={selectedCityId1.ToString()}&endCityId={selectedCityId2.ToString()}");
+            try
+            {
+                root = await
+                HttpClient.GetFromJsonAsync<Root>($"http://api:8082/find-shortest-path?startCityId={selectedCityId1.ToString()}&endCityId={selectedCityId2.ToString()}");
                 @*path = JsonConvert.DeserializeObject<RelationshipProperties>(PropertiesString);*@
                 start_city = root.Start.Properties;
                 end_city = root.End;
@@ -90,7 +96,8 @@
                 selectStatus = $"No path between cities!\n{ex.Message}";
             }
         }
-        else {
+        else
+        {
             selectStatus = "Both cities need to be selected and different!";
         }
     }
