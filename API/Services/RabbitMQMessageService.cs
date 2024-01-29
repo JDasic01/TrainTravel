@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Models;
-
 using CsvHelper;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;

@@ -30,7 +30,7 @@ namespace API.Controllers
         {
             var trainRoutes = await _client
                 .Cypher.Match("(n:TrainRoute)")
-                .OptionalMatch("(n)-[:HAS_LINE]->(city:City)")
+                .OptionalMatch("(n)-[:HAS_ROUTE]->(city:City)")
                 .Return((n, city) => new
                 {
                     route_id = n.As<TrainRouteCSV>().route_id,
@@ -55,17 +55,17 @@ namespace API.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var trainRoute = await _client
-                .Cypher.Match("(n:TrainRoute)")
-                .OptionalMatch("(n)-[:HAS_LINE]->(city:City)")
-                .Where((TrainRoute n) => n.route_id == id)
-                .Return((n, city) => new
-                {
-                    route_id = n.As<TrainRouteCSV>().route_id,
-                    line_id = n.As<TrainRouteCSV>().line_id,
-                    city_ids = n.As<TrainRouteCSV>().city_ids,
-                    mileage = n.As<TrainRouteCSV>().mileage,
-                })
-                .ResultsAsync;
+                    .Cypher.Match("(n:TrainRoute {route_id: $id})")
+                    .OptionalMatch("(n)-[:HAS_ROUTE]->(city:City)")
+                    .WithParam("id", id)
+                    .Return((n, city) => new
+                    {
+                        route_id = n.As<TrainRouteCSV>().route_id,
+                        line_id = n.As<TrainRouteCSV>().line_id,
+                        city_ids = n.As<TrainRouteCSV>().city_ids,
+                        mileage = n.As<TrainRouteCSV>().mileage,
+                    })
+                    .ResultsAsync;
 
             var denormalizedRoutes = trainRoute.Select(route => new
             {
@@ -79,7 +79,7 @@ namespace API.Controllers
 
             if (result == null)
             {
-                return NotFound(); 
+                return NotFound();
             }
 
             return Ok(result);
