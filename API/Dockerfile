@@ -10,9 +10,6 @@ RUN dotnet restore
 # Copy the remaining files
 COPY . ./
 
-# Install EF Core tools
-RUN dotnet tool install --global dotnet-ef --version 7.0.8
-
 # Add EF Core tools to PATH
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
