@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using API.Models;
+using API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Neo4jClient;
 
@@ -10,18 +11,18 @@ namespace API.Controllers
     public class TrainRouteController : ControllerBase
     {
         private readonly IGraphClient _client;
-        private readonly IMessageService<Message> _messageService;
         private readonly IMemoryCache _cache;
+        private readonly IMessageService<Message> _messageService;
 
         public TrainRouteController(
             IGraphClient client,
-            IMessageService<Message> messageService,
-            IMemoryCache cache
+            IMemoryCache cache,
+            IMessageService<Message> messageService
         )
         {
             _client = client;
-            _messageService = messageService;
             _cache = cache;
+            _messageService = messageService;
         }
 
         [HttpGet]
@@ -29,7 +30,7 @@ namespace API.Controllers
         {
             var trainRoutes = await _client
                 .Cypher.Match("(n:TrainRoute)")
-                .OptionalMatch("(n)-[:HAS_LINE]->(city:City)")
+                .OptionalMatch("(n)-[:HAS_ROUTE]->(city:City)")
                 .Return((n, city) => new
                 {
                     route_id = n.As<TrainRouteCSV>().route_id,
@@ -54,17 +55,17 @@ namespace API.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var trainRoute = await _client
-                .Cypher.Match("(n:TrainRoute)")
-                .OptionalMatch("(n)-[:HAS_LINE]->(city:City)")
-                .Where((TrainRoute n) => n.route_id == id)
-                .Return((n, city) => new
-                {
-                    route_id = n.As<TrainRouteCSV>().route_id,
-                    line_id = n.As<TrainRouteCSV>().line_id,
-                    city_ids = n.As<TrainRouteCSV>().city_ids,
-                    mileage = n.As<TrainRouteCSV>().mileage,
-                })
-                .ResultsAsync;
+                    .Cypher.Match("(n:TrainRoute {route_id: $id})")
+                    .OptionalMatch("(n)-[:HAS_ROUTE]->(city:City)")
+                    .WithParam("id", id)
+                    .Return((n, city) => new
+                    {
+                        route_id = n.As<TrainRouteCSV>().route_id,
+                        line_id = n.As<TrainRouteCSV>().line_id,
+                        city_ids = n.As<TrainRouteCSV>().city_ids,
+                        mileage = n.As<TrainRouteCSV>().mileage,
+                    })
+                    .ResultsAsync;
 
             var denormalizedRoutes = trainRoute.Select(route => new
             {
@@ -74,8 +75,16 @@ namespace API.Controllers
                 mileage = ParseMileage(route.mileage),
             });
 
-            return Ok(denormalizedRoutes.FirstOrDefault());
+            var result = denormalizedRoutes.FirstOrDefault();
+
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(result);
         }
+
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] TrainRouteCSV trainRoute)

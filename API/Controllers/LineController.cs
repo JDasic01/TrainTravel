@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using API.Services;
 using API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Neo4jClient;
@@ -14,18 +9,12 @@ namespace API.Controllers
     public class LineController : ControllerBase
     {
         private readonly IGraphClient _client;
-        private readonly ICacheService _cacheService;
-        private readonly IMessageService<Message> _messageService;
 
         public LineController(
-            IGraphClient client,
-            ICacheService cacheService,
-            IMessageService<Message> messageService
+            IGraphClient client
         )
         {
             _client = client;
-            _cacheService = cacheService;
-            _messageService = messageService;
         }
 
         [HttpGet]

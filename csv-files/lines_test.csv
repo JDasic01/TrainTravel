@@ -8,3 +8,4 @@ line_id,line_name,start_city_id,end_city_id
 93,"Pula-Dubrovnik",5,4
 95,"Rijeka-Delnice",1,6
 97,"Delnice-Karlovac",6,7
+98,"Delnice-Zagreb",6,2

@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using API.Models;
-using API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Neo4jClient;
 
@@ -15,17 +10,14 @@ namespace API.Controllers
     {
         private readonly ILogger<CityController> _logger;
         private readonly IGraphClient _client;
-        private readonly ICacheService _cacheService;
 
         public CityController(
             IGraphClient client,
-            ICacheService cacheService,
             ILogger<CityController> logger
         )
         {
             _logger = logger;
             _client = client;
-            _cacheService = cacheService;
         }
 
         [HttpGet]

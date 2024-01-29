@@ -51,7 +51,7 @@ namespace API.Controllers
 
                 return BadRequest("No path found");
             }
-            catch (Exception ex)
+            catch (Exception ex)   
             {
                 return BadRequest($"Error executing Dijkstra algorithm: {ex.Message}");
             }
