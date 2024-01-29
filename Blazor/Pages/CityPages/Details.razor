@@ -1,0 +1,44 @@
+@page "/cities/{id}"
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using Blazor.Data;
+@inject NavigationManager Navigation
+
+<PageTitle>Update City</PageTitle>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <a class="btn btn-primary" href="/cities" role="button">Return</a>
+
+    <h1>@city.cityName</h1>
+    <br/>
+    @if (city.availableRoutes.Count > 0){
+        <h2>Available routes:</h2>
+        @foreach (var end in city.availableRoutes)
+        {
+            <p>Route Id: @end.lineId &emsp; End city name: @end.endCityName</p>
+        }
+    }
+    else {
+        <p>No available routes!</p>
+    }
+    
+    
+}
+
+@code {
+    [Parameter]
+    public string id { get; set; }
+    private GetCity city = new GetCity();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        city = await HttpClient.GetFromJsonAsync<GetCity?>($"http://api:8082/City/{id}");
+        isLoading = false;
+    }
+}
