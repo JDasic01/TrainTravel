@@ -5,39 +5,32 @@ using System.ComponentModel.DataAnnotations;
 
 public class Node
 {
-    public int id { get; set; }
-    public List<string> labels { get; set; }
-    public Properties properties { get; set; }
-}
-
-public class Path
-{
-    public Node start { get; set; }
-    public Node end { get; set; }
-    public List<Node> nodes { get; set; }
-    public List<Relationship> relationships { get; set; }
+    public int Id { get; set; }
+    public List<string> Labels { get; set; }
+    public Properties Properties { get; set; }
 }
 
 public class Properties
 {
-    public object cityName { get; set; }
-    public int cityId { get; set; }
-    public int lineId { get; set; }
+    public string city_name { get; set; }
+    public int city_id { get; set; }
+    public int line_id { get; set; }
     public int mileage { get; set; }
 }
 
 public class Relationship
 {
-    public int id { get; set; }
-    public string type { get; set; }
-    public int startNodeId { get; set; }
-    public int endNodeId { get; set; }
-    public Properties properties { get; set; }
+    public int Id { get; set; }
+    public string Type { get; set; }
+    public int StartNodeId { get; set; }
+    public int EndNodeId { get; set; }
+    public Properties Properties { get; set; }
 }
 
 public class Root
 {
-    public Path path { get; set; }
-    public List<Node> nodes { get; set; }
-    public List<Relationship> relationships { get; set; }
+    public Node Start { get; set; }
+    public Node End { get; set; }
+    public List<Node> Nodes { get; set; }
+    public List<Relationship> Relationships { get; set; }
 }
