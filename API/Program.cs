@@ -1,14 +1,10 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
 using Neo4jClient;
-using Neo4j.Driver;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using API.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,8 +27,6 @@ builder.Services.AddSingleton<IGraphClient>(provider =>
     return client;
 });
 
-builder.Services.AddHttpClient();
-
 builder.Services.AddSingleton<IMessageService<Message>, RabbitMQMessageService<Message>>(provider => 
 {
     var factory = new ConnectionFactory
@@ -50,8 +44,10 @@ builder.Services.AddSingleton<IMessageService<Message>, RabbitMQMessageService<M
     return new RabbitMQMessageService<Message>(factory, connection, channel);
 });
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddHostedService<RabbitMQConsumer>();
-builder.Services.AddScoped<ICacheService, CacheService>();
+
 builder.Services.AddMemoryCache();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

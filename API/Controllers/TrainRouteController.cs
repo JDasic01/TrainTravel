@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using API.Models;
+using API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Neo4jClient;
 
@@ -10,18 +11,18 @@ namespace API.Controllers
     public class TrainRouteController : ControllerBase
     {
         private readonly IGraphClient _client;
-        private readonly IMessageService<Message> _messageService;
         private readonly IMemoryCache _cache;
+        private readonly IMessageService<Message> _messageService;
 
         public TrainRouteController(
             IGraphClient client,
-            IMessageService<Message> messageService,
-            IMemoryCache cache
+            IMemoryCache cache,
+            IMessageService<Message> messageService
         )
         {
             _client = client;
-            _messageService = messageService;
             _cache = cache;
+            _messageService = messageService;
         }
 
         [HttpGet]
@@ -74,8 +75,16 @@ namespace API.Controllers
                 mileage = ParseMileage(route.mileage),
             });
 
-            return Ok(denormalizedRoutes.FirstOrDefault());
+            var result = denormalizedRoutes.FirstOrDefault();
+
+            if (result == null)
+            {
+                return NotFound(); 
+            }
+
+            return Ok(result);
         }
+
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] TrainRouteCSV trainRoute)
