@@ -196,3 +196,7 @@ response
 routes API potencijalni podaci
 
 ![routes api](image.png)
+
+**Ideja podataka**
+1. sa wikipedije dohvatit sva stajališta u nekoj državi(webscraping u csv)
+2. izracunat udaljenost preko routes apija za linije(linije bi bile "fakeane" ukoliko postoji put od tocke a do tocke b linija moze postojati nije da nuzno postoji, ne vidim podatke za presjedanja)
