@@ -192,3 +192,7 @@ response
 ]
 }
 ```
+
+routes API potencijalni podaci
+
+![routes api](image.png)
