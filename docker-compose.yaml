@@ -53,29 +53,12 @@ services:
     restart: always
     ports:
       - 7474:7474
-      - 7687:7687
+      
     environment:
       - NEO4J_AUTH=none
     networks:
       - rabbitmq_go_net
-  
-  gpt4all:
-    image: gpt4all
-    build: ./gpt4all
-    ports:
-      - "5000:5000"
-    environment:
-      - DISPLAY=${DISPLAY}
-      - PATH=${PATH}="/root/gpt4all/bin/chat:/gpt4all/bin/chat"
-      - XDG_RUNTIME_DIR=/tmp/xdg_runtime_dir
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - ./data/local/share/nomic.ai:/home/user/.local/share/nomic.ai/GPT4All
-      - ./data/gpt4all:/gpt4all
-    networks:
-      - rabbitmq_go_net
-    network_mode: host
-
+      
 networks:
   rabbitmq_go_net:
     driver: bridge
