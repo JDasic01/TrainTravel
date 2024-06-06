@@ -63,6 +63,15 @@ builder.Services.AddSingleton<RabbitMQConsumer>(provider =>
     return new RabbitMQConsumer(channel, httpClient, graphClient);
 });
 
+builder.Services.AddSingleton<TouristGuideService>(provider =>
+{
+    var graphClient = provider.GetRequiredService<IGraphClient>();
+    var httpClient = provider.GetRequiredService<HttpClient>();
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    var apiToken = configuration["HuggingFace:ApiToken"];
+    
+    return new TouristGuideService(graphClient, httpClient, apiToken);
+});
 
 builder.Services.AddMemoryCache();
 builder.Services.AddEndpointsApiExplorer();

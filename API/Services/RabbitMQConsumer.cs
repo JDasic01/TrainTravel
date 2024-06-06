@@ -10,7 +10,7 @@ using API.Models;
 using Neo4jClient;
 
 public class RabbitMQConsumer : IHostedService
-    {
+{
     private readonly IModel _channel;
     private readonly HttpClient _httpClient;
     private readonly IGraphClient _graphClient;
@@ -99,4 +99,4 @@ public class RabbitMQConsumer : IHostedService
             // send messages to polly? queue, do it for cities that dont have audio files for all languages
             return Task.CompletedTask;
         }
-    }
+}

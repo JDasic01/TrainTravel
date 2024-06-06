@@ -5,6 +5,7 @@ using HtmlAgilityPack;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text;
+using System.Linq;
 
 namespace API.Controllers
 {
@@ -39,6 +40,9 @@ namespace API.Controllers
             var seeSectionContent = GetSectionContent(htmlDoc, "//*[@id=\"See\"]");
             var doSectionContent = GetSectionContent(htmlDoc, "//*[@id=\"Do\"]");
 
+            // Ensure the total token count is less than 1000
+            (seeSectionContent, doSectionContent) = EnsureTokenLimit(city.city_name, seeSectionContent, doSectionContent);
+
             await SaveCitySectionsToDb(city.city_name, seeSectionContent, doSectionContent);
 
             return Ok(new { City = city.city_name, See = seeSectionContent, Do = doSectionContent });
@@ -48,7 +52,7 @@ namespace API.Controllers
         {
             await _client.Cypher
                 .Match("(c:City {city_name: $cityName})")
-                .Set("c.see = $seeContent, c.do = $doContent")
+                .Set("c.see_text = $seeContent, c.do_text = $doContent")
                 .WithParams(new { cityName, seeContent, doContent })
                 .ExecuteWithoutResultsAsync();
         }
@@ -68,6 +72,44 @@ namespace API.Controllers
                 return contentBuilder.ToString().Trim();
             }
             return null;
+        }
+
+        private (string, string) EnsureTokenLimit(string cityName, string seeContent, string doContent)
+        {
+            int tokenLimit = 1000;
+
+            int cityNameTokens = cityName.Split(' ').Length;
+            int seeContentTokens = seeContent.Split(' ').Length;
+            int doContentTokens = doContent.Split(' ').Length;
+
+            int totalTokens = cityNameTokens + seeContentTokens + doContentTokens;
+
+            if (totalTokens > tokenLimit)
+            {
+                int excessTokens = totalTokens - tokenLimit;
+                int seeContentLimit = Math.Max(seeContentTokens - (excessTokens / 2), 0);
+                int doContentLimit = Math.Max(doContentTokens - (excessTokens / 2), 0);
+
+                seeContent = string.Join(' ', seeContent.Split(' ').Take(seeContentLimit));
+                doContent = string.Join(' ', doContent.Split(' ').Take(doContentLimit));
+
+                totalTokens = cityNameTokens + seeContent.Split(' ').Length + doContent.Split(' ').Length;
+
+                if (totalTokens > tokenLimit)
+                {
+                    int finalExcessTokens = totalTokens - tokenLimit;
+                    if (seeContent.Split(' ').Length > doContent.Split(' ').Length)
+                    {
+                        seeContent = string.Join(' ', seeContent.Split(' ').Take(seeContent.Split(' ').Length - finalExcessTokens));
+                    }
+                    else
+                    {
+                        doContent = string.Join(' ', doContent.Split(' ').Take(doContent.Split(' ').Length - finalExcessTokens));
+                    }
+                }
+            }
+
+            return (seeContent, doContent);
         }
     }
 }
