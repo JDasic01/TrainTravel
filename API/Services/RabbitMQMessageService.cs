@@ -9,47 +9,37 @@ using CsvHelper;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
+using Newtonsoft.Json;
+
 
 namespace API.Services;
-
-public interface IMessageService<T>
-{
-    Task SendMessageAsync(T message, string channel);
-    Task<T> ReceiveMessageAsync(string channel);
-}
-
 public class RabbitMQMessageService<T> : IMessageService<T>, IDisposable
 {
-    private readonly ConnectionFactory _factory;
-    private readonly IConnection _connection;
     private readonly IModel _channel;
 
-    public RabbitMQMessageService(ConnectionFactory factory, IConnection connection, IModel channel)
+    public RabbitMQMessageService(IModel channel)
     {
-        _factory = factory;
-        _connection = _factory.CreateConnection();
-        _channel = _connection.CreateModel();
-        _channel.QueueDeclare(queue: "lines_queue", durable: false, exclusive: false, autoDelete: false, arguments: null);
+        _channel = channel;
     }
 
-    public async Task SendMessageAsync(T message, string channel)
+    public async Task SendMessageAsync(T message, string queueName)
     {
-        var serializedMessage = Newtonsoft.Json.JsonConvert.SerializeObject(message);
+        var serializedMessage = JsonConvert.SerializeObject(message);
         var body = Encoding.UTF8.GetBytes(serializedMessage);
 
-        await Task.Run(() => _channel.BasicPublish(exchange: "", routingKey: channel, basicProperties: null, body: body));
+        await Task.Run(() => _channel.BasicPublish(exchange: "", routingKey: queueName, basicProperties: null, body: body));
     }
 
-    public async Task<T> ReceiveMessageAsync(string channel)
+    public async Task<T> ReceiveMessageAsync(string queueName)
     {
         var result = await Task.Run(() =>
         {
-            BasicGetResult messageResult = _channel.BasicGet(channel, autoAck: true);
+            var messageResult = _channel.BasicGet(queueName, autoAck: true);
             if (messageResult == null)
                 return default(T);
 
             var messageBody = Encoding.UTF8.GetString(messageResult.Body.ToArray());
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(messageBody);
+            return JsonConvert.DeserializeObject<T>(messageBody);
         });
 
         return result;
@@ -58,6 +48,6 @@ public class RabbitMQMessageService<T> : IMessageService<T>, IDisposable
     public void Dispose()
     {
         _channel.Close();
-        _connection.Close();
+        _channel.Dispose();
     }
 }

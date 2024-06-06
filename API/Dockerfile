@@ -15,6 +15,7 @@ RUN dotnet add package Newtonsoft.Json --version 13.0.3
 RUN dotnet add package CsvHelper --version 27.1.1
 RUN dotnet add package Neo4jClient --version 4.1.0.49
 RUN dotnet add package HtmlAgilityPack --version 1.11.24
+RUN dotnet add package AWSSDK.Translate --version 3.7.300.100
 
 # Build the application
 RUN dotnet build -c Release -o out

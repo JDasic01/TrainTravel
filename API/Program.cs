@@ -38,12 +38,31 @@ builder.Services.AddSingleton<IMessageService<Message>, RabbitMQMessageService<M
     var connection = factory.CreateConnection();
     var channel = connection.CreateModel();
 
-    return new RabbitMQMessageService<Message>(factory, connection, channel);
+    return new RabbitMQMessageService<Message>(channel);
 });
 
 builder.Services.AddHttpClient();
 
-builder.Services.AddHostedService<RabbitMQConsumer>();
+builder.Services.AddSingleton<RabbitMQConsumer>(provider =>
+{
+    var factory = new ConnectionFactory
+    {
+        UserName = "guest",
+        Password = "guest",
+        VirtualHost = "/",
+        HostName = "rabbitmq",
+        Port = 5672,
+    };
+
+    var connection = factory.CreateConnection();
+    var channel = connection.CreateModel();
+
+    var httpClient = provider.GetRequiredService<HttpClient>();
+    var graphClient = provider.GetRequiredService<IGraphClient>();
+
+    return new RabbitMQConsumer(channel, httpClient, graphClient);
+});
+
 
 builder.Services.AddMemoryCache();
 builder.Services.AddEndpointsApiExplorer();
