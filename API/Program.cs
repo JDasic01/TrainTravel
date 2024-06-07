@@ -7,8 +7,10 @@ using API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container.
 builder.Services.AddControllers();
 
+// Register your services
 builder.Services.AddSingleton<Neo4jService>(provider =>
 {
     var neo4jSettings = builder.Configuration.GetSection("Neo4jSettings").Get<Neo4jSettings>();
@@ -72,6 +74,18 @@ builder.Services.AddSingleton<TouristGuideService>(provider =>
     
     return new TouristGuideService(graphClient, httpClient, apiToken);
 });
+
+builder.Services.AddSingleton<WebScrapingService>(provider =>
+{
+    var graphClient = provider.GetRequiredService<IGraphClient>();
+    var httpClient = provider.GetRequiredService<HttpClient>();
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    var apiToken = configuration["HuggingFace:ApiToken"];
+    
+    return new WebScrapingService(graphClient, httpClient, apiToken);
+});
+
+builder.Services.AddSingleton<IHostedService, ScheduledHostedService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddEndpointsApiExplorer();

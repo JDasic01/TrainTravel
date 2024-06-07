@@ -1,61 +1,61 @@
 using API.Models;
-using Microsoft.AspNetCore.Mvc;
 using Neo4jClient;
 using HtmlAgilityPack;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Text;
-using System.Linq;
 
-namespace API.Controllers
+public class WebScrapingService
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class WebScrapingController : ControllerBase
+    private readonly IGraphClient _graphClient;
+    private readonly HttpClient _httpClient;
+    private readonly string _base_url = "https://www.wikitravel.org/en/";
+    private readonly string _apiToken;
+
+    public WebScrapingService(IGraphClient graphClient, HttpClient httpClient, string apiToken)
     {
-        private readonly IGraphClient _client;
-        private readonly string _base_url = "https://www.wikitravel.org/en/";
+        _graphClient = graphClient;
+        _httpClient = httpClient;
+        _apiToken = apiToken;
+    }
 
-        public WebScrapingController(IGraphClient client)
+    public async void GetCitiesData()
+    {
+        try
         {
-            _client = client;
-        }
+            var cities = await _graphClient.Cypher
+            .Match("(n:City)")
+            .Where("n.do_text IS NULL OR n.see_text IS NULL")
+            .Return(n => n.As<City>())
+            .ResultsAsync;
 
-        [HttpPost]
-        [Route("scrape")]
-        public async Task<IActionResult> ScrapeCity([FromBody] City city)
-        {
-            var url = _base_url + city.city_name;
-            HttpClient client = new HttpClient();
-            var response = await client.GetAsync(url);
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            foreach(var city in cities)
             {
-                return NotFound($"City {city.city_name} not found.");
+                var url = _base_url + city.city_name;
+                HttpClient client = new HttpClient();
+                var response = await client.GetAsync(url);
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return;
+                }
+            
+                var responseBody = await response.Content.ReadAsStringAsync();
+                HtmlDocument htmlDoc = new HtmlDocument();
+                htmlDoc.LoadHtml(responseBody);
+
+                var seeSectionContent = GetSectionContent(htmlDoc, "//*[@id=\"See\"]");
+                var doSectionContent = GetSectionContent(htmlDoc, "//*[@id=\"Do\"]");
+
+                (seeSectionContent, doSectionContent) = EnsureTokenLimit(city.city_name, seeSectionContent, doSectionContent);
+
+                await SaveCitySectionsToDb(city.city_name, seeSectionContent, doSectionContent);
             }
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-            HtmlDocument htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(responseBody);
-
-            var seeSectionContent = GetSectionContent(htmlDoc, "//*[@id=\"See\"]");
-            var doSectionContent = GetSectionContent(htmlDoc, "//*[@id=\"Do\"]");
-
-            // Ensure the total token count is less than 1000
-            (seeSectionContent, doSectionContent) = EnsureTokenLimit(city.city_name, seeSectionContent, doSectionContent);
-
-            await SaveCitySectionsToDb(city.city_name, seeSectionContent, doSectionContent);
-
-            return Ok(new { City = city.city_name, See = seeSectionContent, Do = doSectionContent });
         }
-
-        private async Task SaveCitySectionsToDb(string cityName, string seeContent, string doContent)
+        catch (Exception ex)
         {
-            await _client.Cypher
-                .Match("(c:City {city_name: $cityName})")
-                .Set("c.see_text = $seeContent, c.do_text = $doContent")
-                .WithParams(new { cityName, seeContent, doContent })
-                .ExecuteWithoutResultsAsync();
+            Console.WriteLine($"Exception occurred: {ex.Message}");
+            Console.WriteLine($"Stack Trace: {ex.StackTrace}");
         }
+    }
+
 
         private static string GetSectionContent(HtmlDocument htmlDoc, string sectionXPath)
         {
@@ -76,7 +76,7 @@ namespace API.Controllers
 
         private (string, string) EnsureTokenLimit(string cityName, string seeContent, string doContent)
         {
-            int tokenLimit = 1000;
+            int tokenLimit = 850;
 
             int cityNameTokens = cityName.Split(' ').Length;
             int seeContentTokens = seeContent.Split(' ').Length;
@@ -111,5 +111,24 @@ namespace API.Controllers
 
             return (seeContent, doContent);
         }
+
+        private async Task SaveCitySectionsToDb(string cityName, string seeContent, string doContent)
+        {
+            await _graphClient.Cypher
+                .Match("(c:City {city_name: $cityName})")
+                .Set("c.see_text = $seeContent, c.do_text = $doContent")
+                .WithParams(new { cityName, seeContent, doContent })
+                .ExecuteWithoutResultsAsync();
+        }
+
+    public class HuggingFaceResponse
+    {
+        public List<HuggingFaceChoice> choices { get; set; }
     }
+
+    public class HuggingFaceChoice
+    {
+        public string text { get; set; }
+    }
+
 }

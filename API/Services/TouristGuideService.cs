@@ -21,75 +21,62 @@ public class TouristGuideService
         _apiToken = apiToken;
     }
 
-    public async Task<string> GetTouristGuideAsync(string cityName)
+    public async void GetTouristGuideAsync()
     {
         try
         {
-            var city = await _graphClient.Cypher
-                .Match("(n:City)")
-                .Where((City n) => n.city_name == cityName)
-                .Return(n => n.As<City>())
-                .ResultsAsync;
+            var cities = await _graphClient.Cypher
+            .Match("(n:City)")
+            .Where("n.english_guide IS NULL")
+            .Return(n => n.As<City>())
+            .ResultsAsync;
 
-            if (city == null || !city.Any())
+            foreach(var city in cities)
             {
-                return $"City {cityName} not found in the database.";
-            }
 
-            var cityData = city.FirstOrDefault();
-            if (cityData == null)
-            {
-                return $"City {cityName} not found in the database.";
-            }
-            else if (cityData.see_text == null || cityData.do_text == null)
-            {
-                return $"Insufficient data for {cityData.city_name} to generate a tourist guide.";
-            }
-
-            var prompt = $"You are a tourist guide for the city {cityData.city_name}. Here are some highlights to see: {cityData.see_text}, and things to do: {cityData.do_text}. Generate a tourist guide plan based on this information.";
-
-            var payload = new
-            {
-                inputs = prompt,
-                parameters = new
+                if (city.see_text == null || city.do_text == null)
                 {
-                    max_length = 1000 
+                    continue;
                 }
-            };
 
-            var requestContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "");
+                var prompt = $"You are a tourist guide for the city {city.city_name}. Here are some highlights to see: {city.see_text}, and things to do: {city.do_text}. Generate a tourist guide plan based on this information.";
 
-            var response = await _httpClient.PostAsync(_huggingFaceApiUrl, requestContent);
+                var payload = new
+                {
+                    inputs = prompt,
+                    parameters = new
+                    {
+                        max_length = 1000 
+                    }
+                };
 
-            response.EnsureSuccessStatusCode();
+                var requestContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "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");
 
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<HuggingFaceResponse>(responseContent);
+                var response = await _httpClient.PostAsync(_huggingFaceApiUrl, requestContent);
 
-            return result.choices.FirstOrDefault()?.text ?? "No response from the AI model.";
+                response.EnsureSuccessStatusCode();
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<HuggingFaceResponse>(responseContent);
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Exception occurred: {ex.Message}");
             Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-            return "An error occurred while generating the tourist guide.";
         }
     }
-}
-
-public class HuggingFaceResponse
-{
-    public List<HuggingFaceChoice> choices { get; set; }
-}
-
-public class HuggingFaceChoice
-{
-    public string text { get; set; }
-}
 
 
-public class Choice
-{
-    public string text { get; set; }
+    public class HuggingFaceResponse
+    {
+        public List<HuggingFaceChoice> choices { get; set; }
+    }
+
+    public class HuggingFaceChoice
+    {
+        public string text { get; set; }
+    }
+
 }
