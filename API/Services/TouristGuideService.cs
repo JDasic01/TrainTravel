@@ -34,12 +34,12 @@ public class TouristGuideService
             foreach(var city in cities)
             {
 
-                if (city.see_text == null || city.do_text == null)
+                if (city.seeSection == null || city.doSection == null)
                 {
                     continue;
                 }
 
-                var prompt = $"You are a tourist guide for the city {city.city_name}. Here are some highlights to see: {city.see_text}, and things to do: {city.do_text}. Generate a tourist guide plan based on this information.";
+                var prompt = $"You are a tourist guide for the city {city.name}. Here are some highlights to see: {city.seeSection}, and things to do: {city.doSection}. Generate a tourist guide plan based on this information.";
 
                 var payload = new
                 {
@@ -59,6 +59,8 @@ public class TouristGuideService
 
                 var responseContent = await response.Content.ReadAsStringAsync();
                 var result = JsonSerializer.Deserialize<HuggingFaceResponse>(responseContent);
+                
+                Console.WriteLine($"{result.choices.FirstOrDefault().text}");
             }
         }
         catch (Exception ex)

@@ -24,12 +24,12 @@
         @foreach (var line in lines)
         {
             <tr>
-                <td>@line.line_id</td>
-                <td>@line.line_name</td>
-                <td>@line.start_city_id</td>
-                <td>@line.end_city_id</td>
-                <td><a class="btn btn-secondary" href="/lines/update/@line.line_id" role="button">Update</a></td>
-                <td><button class="btn btn-danger" @onclick="() => DeleteData(line.line_id)">Delete</button></td>
+                <td>@line.id</td>
+                <td>@line.name</td>
+                <td>@line.startCityId</td>
+                <td>@line.endCityId</td>
+                <td><a class="btn btn-secondary" href="/lines/update/@line.id" role="button">Update</a></td>
+                <td><button class="btn btn-danger" @onclick="() => DeleteData(line.id)">Delete</button></td>
             </tr>
         }
     </tbody>

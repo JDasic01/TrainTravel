@@ -80,12 +80,9 @@ builder.Services.AddSingleton<WebScrapingService>(provider =>
     var graphClient = provider.GetRequiredService<IGraphClient>();
     var httpClient = provider.GetRequiredService<HttpClient>();
     var configuration = provider.GetRequiredService<IConfiguration>();
-    var apiToken = configuration["HuggingFace:ApiToken"];
     
-    return new WebScrapingService(graphClient, httpClient, apiToken);
+    return new WebScrapingService(graphClient, httpClient);
 });
-
-builder.Services.AddSingleton<IHostedService, ScheduledHostedService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddEndpointsApiExplorer();

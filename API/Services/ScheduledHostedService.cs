@@ -34,6 +34,7 @@ public class ScheduledHostedService : IHostedService, IDisposable
 
             var webScrapingService = scope.ServiceProvider.GetRequiredService<WebScrapingService>();
             webScrapingService.GetCitiesData();
+            webScrapingService.ScrapeStations();
         }
     }
 

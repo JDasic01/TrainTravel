@@ -1,5 +1,4 @@
 @page "/train-routes/add"
-@inject Id IdGenerator
 @inject HttpClient HttpClient
 @using System.Net.Http.Json;
 @using System.Net.Http.Headers;
@@ -20,7 +19,7 @@
             <select @bind="selectedLineId">
                 @foreach (var line in lines)
                 {
-                    <option value="@line.line_id">@line.line_name</option>
+                    <option value="@line.id">@line.name</option>
                 }
             </select>
         </div>
@@ -42,7 +41,7 @@
 <p role="status">Status: @createRouteStatus</p>
 
 @code {
-    private TrainRouteCreate trainRoute = new TrainRouteCreate();
+    private TrainRoute trainRoute = new TrainRoute();
     private string cityIds = "";
     private string mileage = "";
     private string createRouteStatus = "";
@@ -51,7 +50,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        IdGenerator = new Id();
         lines = await HttpClient.GetFromJsonAsync<List<Line>>("http://api:8082/Line");
     }
 
@@ -59,9 +57,8 @@
     {
         try
         {
-            trainRoute.route_id = IdGenerator.EntityId;
-            trainRoute.line_id = selectedLineId; 
-            trainRoute.city_ids = cityIds;
+            trainRoute.lineId = selectedLineId; 
+            trainRoute.citiesIds = cityIds;
             trainRoute.mileage = mileage;
 
             var response = await HttpClient.PostAsJsonAsync("http://api:8082/TrainRoute", trainRoute);
@@ -72,7 +69,6 @@
             }
             else
             {
-                // Read and display the error message from the response
                 var errorMessage = await response.Content.ReadAsStringAsync();
                 createRouteStatus = $"Error: {errorMessage}";
             }

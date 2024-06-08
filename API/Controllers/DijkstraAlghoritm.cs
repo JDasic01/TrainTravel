@@ -10,14 +10,12 @@ namespace API.Controllers
     {
         private readonly IGraphClient _client;
         private readonly Neo4jService _driver;
-        private readonly ILogger<CSVFileController> _logger;
         private readonly IMemoryCache _cache;
 
-        public DijkstraAlgorithm(IGraphClient client, ILogger<CSVFileController> logger, Neo4jService driver, IMemoryCache cache)
+        public DijkstraAlgorithm(IGraphClient client, Neo4jService driver, IMemoryCache cache)
         {
             _client = client;
             _driver = driver;
-            _logger = logger;
             _cache = cache;
         }
 
@@ -27,7 +25,6 @@ namespace API.Controllers
             var cacheKey = $"ShortestPath_{startCityId}_{endCityId}";
             if (_cache.TryGetValue(cacheKey, out string cachedResult))
             {
-                _logger.LogInformation("Result retrieved from cache.");
                 return Ok(cachedResult);
             }
 
@@ -42,7 +39,6 @@ namespace API.Controllers
                 var queryResult = await query.ResultsAsync;
                 var result = queryResult?.FirstOrDefault();
 
-                _logger.LogInformation(result);
                 _cache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
                 if (result != null)
                 {

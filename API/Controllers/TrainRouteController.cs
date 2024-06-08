@@ -33,18 +33,18 @@ namespace API.Controllers
                 .OptionalMatch("(n)-[:HAS_ROUTE]->(city:City)")
                 .Return((n, city) => new
                 {
-                    route_id = n.As<TrainRouteCSV>().id,
-                    line_id = n.As<TrainRouteCSV>().lineId,
-                    city_ids = n.As<TrainRouteCSV>().cityIds,
+                    id = n.As<TrainRouteCSV>().id,
+                    lineId = n.As<TrainRouteCSV>().lineId,
+                    cityIds = n.As<TrainRouteCSV>().cityIds,
                     mileage = n.As<TrainRouteCSV>().mileage,
                 })
                 .ResultsAsync;
 
             var denormalizedRoutes = trainRoutes.Select(route => new
             {
-                route_id = route.route_id,
-                line_id = route.line_id,
-                city_ids = ParseCityIds(route.city_ids),
+                route_id = route.id,
+                line_id = route.lineId,
+                city_ids = ParseCityIds(route.cityIds),
                 mileage = ParseMileage(route.mileage),
             });
 
@@ -60,7 +60,7 @@ namespace API.Controllers
                     .WithParam("id", id)
                     .Return((n, city) => new
                     {
-                        route_id = n.As<TrainRouteCSV>().routeId,
+                        route_id = n.As<TrainRouteCSV>().id,
                         line_id = n.As<TrainRouteCSV>().lineId,
                         city_ids = n.As<TrainRouteCSV>().cityIds,
                         mileage = n.As<TrainRouteCSV>().mileage,
@@ -69,7 +69,7 @@ namespace API.Controllers
 
             var denormalizedRoutes = trainRoute.Select(route => new
             {
-                route_id = route.route_id,
+                id = route.route_id,
                 line_id = route.line_id,
                 city_ids = ParseCityIds(route.city_ids),
                 mileage = ParseMileage(route.mileage),

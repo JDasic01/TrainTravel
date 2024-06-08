@@ -1,13 +1,9 @@
 namespace API.Models;
 
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
 public class Line
 {
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public int StartCityId { get; set; }
-    public int EndCityId { get; set; }
+    public int id { get; set; }
+    public string name { get; set; }
+    public int startCityId { get; set; }
+    public int endCityId { get; set; }
 }

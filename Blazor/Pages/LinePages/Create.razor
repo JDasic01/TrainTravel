@@ -1,5 +1,4 @@
 @page "/lines/add"
-@inject Id IdGenerator
 @inject HttpClient HttpClient
 @using System.Net.Http.Json;
 @using System.Net.Http.Headers;
@@ -49,20 +48,13 @@
 
     private string createLineStatus = "";
 
-    protected override async Task OnInitializedAsync()
-    {
-        IdGenerator = new Id();
-    }
-
     private async Task OnSubmit()
     {
         try
         {
-            line.line_id = IdGenerator.EntityId;
-            line.line_name = lineName; 
-            line.start_city_id  = startCityId;
-            line.end_city_id  = endCityId;
-            line.mileage  = mileage;
+            line.name = lineName; 
+            line.startCityId  = startCityId;
+            line.endCityId  = endCityId;
 
             var response = await HttpClient.PostAsJsonAsync("http://api:8082/Line", line);
 
@@ -72,7 +64,6 @@
             }
             else
             {
-                // Read and display the error message from the response
                 var errorMessage = await response.Content.ReadAsStringAsync();
                 createLineStatus = $"Error: {errorMessage}";
             }

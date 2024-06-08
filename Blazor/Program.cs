@@ -8,8 +8,6 @@ builder.Services.AddHttpClient("API", client =>
     client.BaseAddress = new Uri("http://api:8082");
 });
 
-builder.Services.AddSingleton<Id>();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
