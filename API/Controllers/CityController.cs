@@ -51,17 +51,17 @@ namespace API.Controllers
                     .ResultsAsync;
 
                 var cityInfo = result
-                    .Where(item => item.City.city_id == id)
+                    .Where(item => item.City.id == id)
                     .Select(item => new
                     {
-                        CityId = item.City.city_id,
-                        CityName = item.City.city_name,
+                        CityId = item.City.id,
+                        CityName = item.City.name,
                         AvailableRoutes = item
                             .Lines.Select(line => new
                             {
-                                LineId = line.line_id,
-                                EndCityId = item.OtherCities.First().city_id,
-                                EndCityName = item.OtherCities.First().city_name
+                                LineId = line.id,
+                                EndCityId = item.OtherCities.First().id,
+                                EndCityName = item.OtherCities.First().name
                             })
                             .ToList()
                     })
@@ -96,7 +96,7 @@ namespace API.Controllers
         {
             await _client
                 .Cypher.Match("(c:City)")
-                .Where((City c) => c.city_id == id)
+                .Where((City c) => c.id == id)
                 .Set("c = $city")
                 .WithParam("city", city)
                 .ExecuteWithoutResultsAsync();
@@ -109,22 +109,22 @@ namespace API.Controllers
             await _client
                 .Cypher
                 .Match("(start:City)-[r:HAS_ROUTE]-(end:City)")
-                .Where((City start) => start.city_id == id)
-                .OrWhere((City end) => end.city_id == id)
+                .Where((City start) => start.id == id)
+                .OrWhere((City end) => end.id == id)
                 .Delete("r")
                 .ExecuteWithoutResultsAsync();
 
             await _client
                 .Cypher
                 .Match("(start:City)-[r:HAS_LINE]-(end:City)")
-                .Where((City start) => start.city_id == id)
-                .OrWhere((City end) => end.city_id == id)
+                .Where((City start) => start.id == id)
+                .OrWhere((City end) => end.id == id)
                 .Delete("r")
                 .ExecuteWithoutResultsAsync();
 
             await _client
                 .Cypher.Match("(c:City)")
-                .Where((City c) => c.city_id == id)
+                .Where((City c) => c.id == id)
                 .Delete("c")
                 .ExecuteWithoutResultsAsync();
             return Ok();

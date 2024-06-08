@@ -33,9 +33,9 @@ namespace API.Controllers
                 .OptionalMatch("(n)-[:HAS_ROUTE]->(city:City)")
                 .Return((n, city) => new
                 {
-                    route_id = n.As<TrainRouteCSV>().route_id,
-                    line_id = n.As<TrainRouteCSV>().line_id,
-                    city_ids = n.As<TrainRouteCSV>().city_ids,
+                    route_id = n.As<TrainRouteCSV>().id,
+                    line_id = n.As<TrainRouteCSV>().lineId,
+                    city_ids = n.As<TrainRouteCSV>().cityIds,
                     mileage = n.As<TrainRouteCSV>().mileage,
                 })
                 .ResultsAsync;
@@ -60,9 +60,9 @@ namespace API.Controllers
                     .WithParam("id", id)
                     .Return((n, city) => new
                     {
-                        route_id = n.As<TrainRouteCSV>().route_id,
-                        line_id = n.As<TrainRouteCSV>().line_id,
-                        city_ids = n.As<TrainRouteCSV>().city_ids,
+                        route_id = n.As<TrainRouteCSV>().routeId,
+                        line_id = n.As<TrainRouteCSV>().lineId,
+                        city_ids = n.As<TrainRouteCSV>().cityIds,
                         mileage = n.As<TrainRouteCSV>().mileage,
                     })
                     .ResultsAsync;
@@ -93,21 +93,21 @@ namespace API.Controllers
                     .Cypher.Create(
                            "(t:TrainRoute {route_id: $route_id, line_id: $line_id, city_ids: $city_ids, mileage: $mileage})"
                             )
-                            .WithParam("route_id", trainRoute.route_id)
-                            .WithParam("line_id", trainRoute.line_id)
-                            .WithParam("city_ids", trainRoute.city_ids)
+                            .WithParam("route_id", trainRoute.id)
+                            .WithParam("line_id", trainRoute.lineId)
+                            .WithParam("city_ids", trainRoute.cityIds)
                             .WithParam("mileage", trainRoute.mileage)
                             .ExecuteWithoutResultsAsync();
 
             TrainRoute trainRoute1 = new TrainRoute();
-            trainRoute1.route_id = trainRoute.route_id;
-            trainRoute1.line_id = trainRoute.line_id;
-            trainRoute1.city_ids = ParseCityIds(trainRoute.city_ids);
+            trainRoute1.id = trainRoute.id;
+            trainRoute1.lineId = trainRoute.lineId;
+            trainRoute1.citiesIds = ParseCityIds(trainRoute.cityIds);
             trainRoute1.mileage = ParseMileage(trainRoute.mileage);
-            for (int i = 0; i < trainRoute1.city_ids.Count - 1; i++)
+            for (int i = 0; i < trainRoute1.citiesIds.Count - 1; i++)
             {
-                int currentCityId = trainRoute1.city_ids[i];
-                int nextCityId = trainRoute1.city_ids[i + 1];
+                int currentCityId = trainRoute1.citiesIds[i];
+                int nextCityId = trainRoute1.citiesIds[i + 1];
 
                 await _client
                     .Cypher.Match(
@@ -118,7 +118,7 @@ namespace API.Controllers
                         $"(c{currentCityId})-[r{currentCityId}{nextCityId}:HAS_ROUTE]->(c{nextCityId})"
                     )
                     .Set(
-                        $"r{currentCityId}{nextCityId} = {{ mileage: {trainRoute1.mileage[i]}, line_id: {trainRoute1.line_id} }}"
+                        $"r{currentCityId}{nextCityId} = {{ mileage: {trainRoute1.mileage[i]}, line_id: {trainRoute1.lineId} }}"
                     )
                     .ExecuteWithoutResultsAsync();
 
@@ -131,13 +131,13 @@ namespace API.Controllers
                         $"(c{nextCityId})-[r{nextCityId}{currentCityId}:HAS_ROUTE]->(c{currentCityId})"
                     )
                     .Set(
-                        $"r{nextCityId}{currentCityId} = {{ mileage: {trainRoute1.mileage[i]}, line_id: {trainRoute1.line_id} }}"
+                        $"r{nextCityId}{currentCityId} = {{ mileage: {trainRoute1.mileage[i]}, line_id: {trainRoute1.lineId} }}"
                     )
                     .ExecuteWithoutResultsAsync();
             }
 
-            var first = trainRoute1.city_ids.First();
-            var last = trainRoute1.city_ids.Last();
+            var first = trainRoute1.citiesIds.First();
+            var last = trainRoute1.citiesIds.Last();
             var cacheKey = $"ShortestPath_{first}_{last}";
             _cache.Remove(cacheKey);
             await _messageService.SendMessageAsync(new Message(first, last), "line_queue");
@@ -152,7 +152,7 @@ namespace API.Controllers
             {
                 await _client
                     .Cypher.Match("(t:TrainRoute)")
-                    .Where((TrainRoute t) => t.route_id == id)
+                    .Where((TrainRoute t) => t.id == id)
                     .DetachDelete("t")
                     .ExecuteWithoutResultsAsync();
 
@@ -160,22 +160,22 @@ namespace API.Controllers
                     .Cypher.Create(
                         "(t:TrainRoute {route_id: $route_id,line_id: $line_id, city_ids: $city_ids, mileage: $mileage})"
                     )
-                    .WithParam("route_id", trainRoute.route_id)
-                    .WithParam("line_id", trainRoute.line_id)
-                    .WithParam("city_ids", trainRoute.city_ids)
+                    .WithParam("route_id", trainRoute.id)
+                    .WithParam("line_id", trainRoute.lineId)
+                    .WithParam("city_ids", trainRoute.cityIds)
                     .WithParam("mileage", trainRoute.mileage)
                     .ExecuteWithoutResultsAsync();
 
                 TrainRoute trainRoute1 = new TrainRoute();
-                trainRoute1.route_id = trainRoute.route_id;
-                trainRoute1.line_id = trainRoute.line_id;
-                trainRoute1.city_ids = ParseCityIds(trainRoute.city_ids);
+                trainRoute1.id = trainRoute.id;
+                trainRoute1.lineId = trainRoute.lineId;
+                trainRoute1.citiesIds = ParseCityIds(trainRoute.cityIds);
                 trainRoute1.mileage = ParseMileage(trainRoute.mileage);
 
-                for (int i = 0; i < trainRoute1.city_ids.Count - 1; i++)
+                for (int i = 0; i < trainRoute1.citiesIds.Count - 1; i++)
                 {
-                    int currentCityId = trainRoute1.city_ids[i];
-                    int nextCityId = trainRoute1.city_ids[i + 1];
+                    int currentCityId = trainRoute1.citiesIds[i];
+                    int nextCityId = trainRoute1.citiesIds[i + 1];
 
                     await _client
                         .Cypher.Match(
@@ -186,7 +186,7 @@ namespace API.Controllers
                             $"(c{currentCityId})-[r{currentCityId}{nextCityId}:HAS_ROUTE]->(c{nextCityId})"
                         )
                         .Set(
-                            $"r{currentCityId}{nextCityId} = {{ mileage: {trainRoute1.mileage[i]}, line_id: {trainRoute1.line_id} }}"
+                            $"r{currentCityId}{nextCityId} = {{ mileage: {trainRoute1.mileage[i]}, line_id: {trainRoute1.lineId} }}"
                         )
                         .ExecuteWithoutResultsAsync();
 
@@ -199,13 +199,13 @@ namespace API.Controllers
                             $"(c{nextCityId})-[r{nextCityId}{currentCityId}:HAS_ROUTE]->(c{currentCityId})"
                         )
                         .Set(
-                            $"r{nextCityId}{currentCityId} = {{ mileage: {trainRoute1.mileage[i]}, line_id: {trainRoute1.line_id} }}"
+                            $"r{nextCityId}{currentCityId} = {{ mileage: {trainRoute1.mileage[i]}, line_id: {trainRoute1.lineId} }}"
                         )
                         .ExecuteWithoutResultsAsync();
                 }
 
-                var first = trainRoute1.city_ids.First();
-                var last = trainRoute1.city_ids.Last();
+                var first = trainRoute1.citiesIds.First();
+                var last = trainRoute1.citiesIds.Last();
                 var cacheKey = $"ShortestPath_{first}_{last}";
                 _cache.Remove(cacheKey);
                 await _messageService.SendMessageAsync(new Message(first, last), "line_queue");
@@ -224,7 +224,7 @@ namespace API.Controllers
         {
             await _client
                 .Cypher.Match("(t:TrainRoute)")
-                .Where((TrainRoute t) => t.route_id == id)
+                .Where((TrainRoute t) => t.id == id)
                 .Delete("t")
                 .ExecuteWithoutResultsAsync();
             return Ok();
