@@ -28,12 +28,13 @@ public class WebScrapingService
             .Where("n.do_text IS NULL OR n.see_text IS NULL")
             .Return(n => n.As<City>())
             .ResultsAsync;
-
+            
+            HttpClient client = new HttpClient();
             foreach(var city in cities)
             {
-                var url = _base_url + city.city_name;
-                HttpClient client = new HttpClient();
+                var url = _base_url + city.city_name;    
                 var response = await client.GetAsync(url);
+
                 if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
                     return;
@@ -42,13 +43,17 @@ public class WebScrapingService
                 var responseBody = await response.Content.ReadAsStringAsync();
                 HtmlDocument htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(responseBody);
-
                 var seeSectionContent = GetSectionContent(htmlDoc, "//*[@id=\"See\"]");
                 var doSectionContent = GetSectionContent(htmlDoc, "//*[@id=\"Do\"]");
 
-                (seeSectionContent, doSectionContent) = EnsureTokenLimit(city.city_name, seeSectionContent, doSectionContent);
+                if (seeSectionContent != null || doSectionContent != null)
+                {
+                    (seeSectionContent, doSectionContent) = EnsureTokenLimit(seeSectionContent, doSectionContent);
+                    await SaveCitySectionsToDb(city.city_name, seeSectionContent, doSectionContent);
+                }
+                
 
-                await SaveCitySectionsToDb(city.city_name, seeSectionContent, doSectionContent);
+                
             }
         }
         catch (Exception ex)
@@ -76,11 +81,11 @@ public class WebScrapingService
             return null;
         }
 
-        private (string, string) EnsureTokenLimit(string seeContent, string doContent)
+        private (string, string) EnsureTokenLimit(string? seeContent, string? doContent)
         {
             int tokenLimit = 850;
 
-                int seeContentTokens = seeContent.Split(' ').Length;
+            int seeContentTokens = seeContent.Split(' ').Length;
             int doContentTokens = doContent.Split(' ').Length;
 
             int totalTokens = seeContentTokens + doContentTokens;
@@ -94,7 +99,7 @@ public class WebScrapingService
                 seeContent = string.Join(' ', seeContent.Split(' ').Take(seeContentLimit));
                 doContent = string.Join(' ', doContent.Split(' ').Take(doContentLimit));
 
-                totalTokens = cityNameTokens + seeContent.Split(' ').Length + doContent.Split(' ').Length;
+                totalTokens = seeContent.Split(' ').Length + doContent.Split(' ').Length;
 
                 if (totalTokens > tokenLimit)
                 {

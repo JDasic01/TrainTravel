@@ -11,7 +11,7 @@ public class TouristGuideService
 {
     private readonly IGraphClient _graphClient;
     private readonly HttpClient _httpClient;
-    private readonly string _huggingFaceApiUrl = "https://api-inference.huggingface.co/models/gpt2";
+    private readonly string _huggingFaceApiUrl = "https://api-inference.huggingface.co/models/Qiliang/bart-large-cnn-samsum-ChatGPT_v3";
     private readonly string _apiToken;
 
     public TouristGuideService(IGraphClient graphClient, HttpClient httpClient, string apiToken)

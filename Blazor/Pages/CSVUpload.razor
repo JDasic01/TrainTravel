@@ -27,9 +27,8 @@
 <button class="btn btn-primary" @onclick="SubmitRoutes" disabled="@(!CanUploadRoutes)">Submit</button>
 
 
-<button class="btn btn-primary" @onclick="WebscrapeData" disabled="@(!CanUploadRoutes)">Scrape cities wikidata</button>
-<button class="btn btn-primary" @onclick="TouristGuide" disabled="@(!CanUploadRoutes)">Create tourist guides</button>
-<button class="btn btn-primary" @onclick="AudioGuide" disabled="@(!CanUploadRoutes)">Create audio guides</button>
+<br>
+<button class="btn btn-primary" @onclick="StartServices">Start Services</button>
 
 @code {
     private bool CanResetDatabase => cities.Length != 0 || routes.Length != 0 || lines.Length != 0;
@@ -198,15 +197,8 @@
         }
     }
 
-    private async Task WebscrapeData()
+    private async Task StartServices()
     {
-    }
-
-    private async Task TouristGuide()
-    {
-    }
-
-    private async Task AudioGuide()
-    {
+        var response = await HttpClient.GetAsync("http://api:8082/Services/StartServices");
     }
 }
