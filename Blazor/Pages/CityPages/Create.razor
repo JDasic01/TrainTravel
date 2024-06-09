@@ -29,6 +29,7 @@
 @code {
     private bool CanCreateCity => !string.IsNullOrWhiteSpace(InputName);
 
+    private City[] cities = new City[0];
     private City newCity = new City();
     private string createCityStatus = "";
 
@@ -38,7 +39,8 @@
     {
         if (CanCreateCity)
         {
-            newCity.name = InputName;
+            newCity.city_id = generateId();
+            newCity.city_name = InputName;
 
             var response = await HttpClient.PostAsJsonAsync("http://api:8082/City", newCity);
 
@@ -55,5 +57,11 @@
         {
             createCityStatus = "Please write the city name!";
         }
+    }
+
+    private static int id = 100;
+    static int generateId()
+    {
+        return id++;
     }
 }

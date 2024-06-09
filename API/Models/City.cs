@@ -2,7 +2,7 @@ namespace API.Models;
 
 public class City
 {
-    public int id { get; private set; }
+    public int city_id { get; set; }
     public string? name { get; set; }
     public string? seeSection { get; set; }
     public string? doSection { get; set; }

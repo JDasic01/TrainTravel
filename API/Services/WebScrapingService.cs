@@ -1,4 +1,5 @@
 using API.Models;
+using Neo4jClient;
 using HtmlAgilityPack;
 using Neo4jClient;
 using System.Text;
@@ -8,12 +9,14 @@ public class WebScrapingService
 {
     private readonly IGraphClient _graphClient;
     private readonly HttpClient _httpClient;
-    private readonly string _baseUrl = "https://www.wikitravel.org/en/";
+    private readonly string _base_url = "https://www.wikitravel.org/en/";
+    private readonly string _apiToken;
 
-    public WebScrapingService(IGraphClient graphClient, HttpClient httpClient)
+    public WebScrapingService(IGraphClient graphClient, HttpClient httpClient, string apiToken)
     {
         _graphClient = graphClient;
         _httpClient = httpClient;
+        _apiToken = apiToken;
     }
 
     public async void GetCitiesData()
@@ -21,31 +24,31 @@ public class WebScrapingService
         try
         {
             var cities = await _graphClient.Cypher
-                .Match("(n:City)")
-                .Where("n.doext IS NULL OR n.see_text IS NULL")
-                .Return(n => n.As<City>())
-                .ResultsAsync;
+            .Match("(n:City)")
+            .Where("n.do_text IS NULL OR n.see_text IS NULL")
+            .Return(n => n.As<City>())
+            .ResultsAsync;
 
-            foreach (var city in cities)
+            foreach(var city in cities)
             {
-                Console.WriteLine($"City: {city.name}");
-                var url = _baseUrl + city.name;
-                var response = await _httpClient.GetAsync(url);
+                var url = _base_url + city.city_name;
+                HttpClient client = new HttpClient();
+                var response = await client.GetAsync(url);
                 if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-                    continue;
+                    return;
                 }
-
+            
                 var responseBody = await response.Content.ReadAsStringAsync();
                 HtmlDocument htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(responseBody);
 
-                var seeSectionContent = GetSectionContent(htmlDoc, "//*[@id='See']");
-                var doSectionContent = GetSectionContent(htmlDoc, "//*[@id='Do']");
+                var seeSectionContent = GetSectionContent(htmlDoc, "//*[@id=\"See\"]");
+                var doSectionContent = GetSectionContent(htmlDoc, "//*[@id=\"Do\"]");
 
-                (seeSectionContent, doSectionContent) = EnsureTokenLimit(seeSectionContent, doSectionContent);
-                Console.WriteLine($"see: {seeSectionContent}, do {doSectionContent}");
-                await SaveCitySectionsToDb(city.name, seeSectionContent, doSectionContent);
+                (seeSectionContent, doSectionContent) = EnsureTokenLimit(city.city_name, seeSectionContent, doSectionContent);
+
+                await SaveCitySectionsToDb(city.city_name, seeSectionContent, doSectionContent);
             }
         }
         catch (Exception ex)
@@ -55,67 +58,69 @@ public class WebScrapingService
         }
     }
 
-    private static string GetSectionContent(HtmlDocument htmlDoc, string sectionXPath)
-    {
-        var sectionNode = htmlDoc.DocumentNode.SelectSingleNode(sectionXPath);
-        if (sectionNode != null)
+
+        private static string GetSectionContent(HtmlDocument htmlDoc, string sectionXPath)
         {
-            var contentBuilder = new StringBuilder();
-            var siblingNode = sectionNode.ParentNode.NextSibling;
-            while (siblingNode != null && siblingNode.Name != "h2")
+            var sectionNode = htmlDoc.DocumentNode.SelectSingleNode(sectionXPath);
+            if (sectionNode != null)
             {
-                contentBuilder.Append(siblingNode.InnerText.Trim());
-                siblingNode = siblingNode.NextSibling;
+                var contentBuilder = new StringBuilder();
+                var siblingNode = sectionNode.ParentNode.NextSibling;
+                while (siblingNode != null && siblingNode.Name != "h2")
+                {
+                    contentBuilder.Append(siblingNode.InnerText.Trim());
+                    siblingNode = siblingNode.NextSibling;
+                }
+                return contentBuilder.ToString().Trim();
             }
-            return contentBuilder.ToString().Trim();
+            return null;
         }
-        return null;
-    }
 
-    private (string, string) EnsureTokenLimit(string seeContent, string doContent)
-    {
-        int tokenLimit = 850;
-
-        int seeContentTokens = seeContent.Split(' ').Length;
-        int doContentTokens = doContent.Split(' ').Length;
-
-        int totalTokens = seeContentTokens + doContentTokens;
-
-        if (totalTokens > tokenLimit)
+        private (string, string) EnsureTokenLimit(string seeContent, string doContent)
         {
-            int excessTokens = totalTokens - tokenLimit;
-            int seeContentLimit = Math.Max(seeContentTokens - (excessTokens / 2), 0);
-            int doContentLimit = Math.Max(doContentTokens - (excessTokens / 2), 0);
-            seeContent = string.Join(' ', seeContent.Split(' ').Take(seeContentLimit));
-            doContent = string.Join(' ', doContent.Split(' ').Take(doContentLimit));
+            int tokenLimit = 850;
 
-            totalTokens = seeContent.Split(' ').Length + doContent.Split(' ').Length;
+                int seeContentTokens = seeContent.Split(' ').Length;
+            int doContentTokens = doContent.Split(' ').Length;
+
+            int totalTokens = seeContentTokens + doContentTokens;
 
             if (totalTokens > tokenLimit)
             {
-                int finalExcessTokens = totalTokens - tokenLimit;
-                if (seeContent.Split(' ').Length > doContent.Split(' ').Length)
+                int excessTokens = totalTokens - tokenLimit;
+                int seeContentLimit = Math.Max(seeContentTokens - (excessTokens / 2), 0);
+                int doContentLimit = Math.Max(doContentTokens - (excessTokens / 2), 0);
+
+                seeContent = string.Join(' ', seeContent.Split(' ').Take(seeContentLimit));
+                doContent = string.Join(' ', doContent.Split(' ').Take(doContentLimit));
+
+                totalTokens = cityNameTokens + seeContent.Split(' ').Length + doContent.Split(' ').Length;
+
+                if (totalTokens > tokenLimit)
                 {
-                    seeContent = string.Join(' ', seeContent.Split(' ').Take(seeContent.Split(' ').Length - finalExcessTokens));
-                }
-                else
-                {
-                    doContent = string.Join(' ', doContent.Split(' ').Take(doContent.Split(' ').Length - finalExcessTokens));
+                    int finalExcessTokens = totalTokens - tokenLimit;
+                    if (seeContent.Split(' ').Length > doContent.Split(' ').Length)
+                    {
+                        seeContent = string.Join(' ', seeContent.Split(' ').Take(seeContent.Split(' ').Length - finalExcessTokens));
+                    }
+                    else
+                    {
+                        doContent = string.Join(' ', doContent.Split(' ').Take(doContent.Split(' ').Length - finalExcessTokens));
+                    }
                 }
             }
+
+            return (seeContent, doContent);
         }
 
-        return (seeContent, doContent);
-    }
-
-    private async Task SaveCitySectionsToDb(string cityName, string seeContent, string doContent)
-    {
-        await _graphClient.Cypher
-            .Match("(c:City {name: $cityName})")
-            .Set("c.see_text = $seeContent, c.do_text = $doContent")
-            .WithParams(new { cityName, seeContent, doContent })
-            .ExecuteWithoutResultsAsync();
-    }
+        private async Task SaveCitySectionsToDb(string cityName, string seeContent, string doContent)
+        {
+            await _graphClient.Cypher
+                .Match("(c:City {city_name: $cityName})")
+                .Set("c.see_text = $seeContent, c.do_text = $doContent")
+                .WithParams(new { cityName, seeContent, doContent })
+                .ExecuteWithoutResultsAsync();
+        }
 
     public async void ScrapeStations()
     {
@@ -185,4 +190,5 @@ public class WebScrapingService
             Console.WriteLine($"An error occurred: {ex.Message}");
         }
     }
+
 }

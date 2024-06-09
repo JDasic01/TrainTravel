@@ -2,8 +2,8 @@ namespace Blazor.Data;
 
 public class TrainRoute
 {
-    public int id { get; set; }
-    public int lineId { get; set; }
-    public string citiesIds { get; set; }
-    public string mileage { get; set; }
+    public int route_id { get; set; }
+    public int line_id { get; set; }
+    public List<int> city_ids { get; set; }
+    public List<int> mileage { get; set; }
 }

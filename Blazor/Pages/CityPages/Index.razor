@@ -24,12 +24,10 @@
             @foreach (var city in cities)
             {
             <tr>
-                <a href="/cities/@city.id">
-                    <td>@city.name</td>
-                    <td>@city.id</td>
-                    <td><a class="btn btn-secondary" href="/cities/update/@city.id" role="button">Update</a></td>
-                    <td><a class="btn btn-secondary"  @onclick="() => DeleteData(city.id)" role="button">Delete</a></td>
-                    </a>
+                    <td><a href="/cities/@city.city_id">@city.city_name</a></td>
+                    <td>@city.city_id</td>
+                    <td><a class="btn btn-secondary" href="/cities/update/@city.city_id" role="button">Update</a></td>
+                    <td><a class="btn btn-secondary"  @onclick="() => DeleteData(city.city_id)" role="button">Delete</a></td>
             </tr>
             }
         </tbody>

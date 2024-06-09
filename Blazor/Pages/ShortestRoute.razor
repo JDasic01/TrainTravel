@@ -4,6 +4,7 @@
 @using System.Net.Http.Json;
 @using System.Collections.Generic;
 @using Blazor.Data;
+@*@using Newtonsoft.Json;*@
 
 <PageTitle>City Graph</PageTitle>
 
@@ -19,7 +20,7 @@
                 <option value="none" selected disabled hidden>Select an Option</option>
                 @foreach (var city in cities)
                 {
-                    <option value="@city.id">@city.name ID: @city.id</option>
+                    <option value="@city.city_id">@city.city_name ID: @city.city_id</option>
                 }
             </select>
 
@@ -28,7 +29,7 @@
                 <option value="none" selected disabled hidden>Select an Option</option>
                 @foreach (var city in cities)
                 {
-                    <option value="@city.id">@city.name ID: @city.id</option>
+                    <option value="@city.city_id">@city.city_name ID: @city.city_id</option>
                 }
             </select>
 
@@ -83,6 +84,7 @@
             {
                 root = await
                 HttpClient.GetFromJsonAsync<Root>($"http://api:8082/find-shortest-path?startCityId={selectedCityId1.ToString()}&endCityId={selectedCityId2.ToString()}");
+                @*path = JsonConvert.DeserializeObject<RelationshipProperties>(PropertiesString);*@
                 start_city = root.Start.Properties;
                 end_city = root.End;
                 end_prop = end_city.Properties;

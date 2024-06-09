@@ -25,21 +25,21 @@
         @foreach (var route in trainRoutes)
         {
             <tr>
-                <td>@lines.FirstOrDefault(l => l.id == route.lineId)?.name</td>
+                <td>@lines.FirstOrDefault(l => l.line_id == route.line_id)?.line_name</td>
                 <td>
-                    @if (route.citiesIds != null && route.citiesIds.Any())
+                    @if (route.city_ids != null && route.city_ids.Any())
                     {
-                        @foreach (var cityId in route.citiesIds)
+                        @foreach (var cityId in route.city_ids)
                         {
-                            var city = cities.FirstOrDefault(c => c.id == cityId);
-                            <span>@city?.name</span>
-                            if (cityId != route.citiesIds.Last()) { <span>, </span> }
+                            var city = cities.FirstOrDefault(c => c.city_id == cityId);
+                            <span>@city?.city_name</span>
+                            if (cityId != route.city_ids.Last()) { <span>, </span> }
                         }
                     }
                 </td>
                 <td>@string.Join(", ", route.mileage)</td>
-                <td><a class="btn btn-secondary" href="/train-routes/update/@route.id" role="button">Update</a></td>
-                <td><button class="btn btn-danger" @onclick="() => DeleteData(route.id)">Delete</button></td>
+                <td><a class="btn btn-secondary" href="/train-routes/update/@route.route_id" role="button">Update</a></td>
+                <td><button class="btn btn-danger" @onclick="() => DeleteData(route.route_id)">Delete</button></td>
             </tr>
         }
     </tbody>
