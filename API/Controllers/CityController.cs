@@ -68,17 +68,17 @@ namespace API.Controllers
                     .ResultsAsync;
 
                 var cityInfo = result
-                    .Where(item => item.City.id == id)
+                    .Where(item => item.City.city_id == id)
                     .Select(item => new
                     {
-                        CityId = item.City.id,
-                        CityName = item.City.name,
+                        CityId = item.City.city_id,
+                        CityName = item.City.city_name,
                         AvailableRoutes = item
                             .Lines.Select(line => new
                             {
-                                LineId = line.id,
-                                EndCityId = item.OtherCities.FirstOrDefault()?.id,
-                                EndCityName = item.OtherCities.FirstOrDefault()?.name
+                                LineId = line.line_id,
+                                EndCityId = item.OtherCities.First().city_id,
+                                EndCityName = item.OtherCities.First().city_name
                             })
                             .ToList()
                     })
@@ -120,52 +120,40 @@ namespace API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] City city)
         {
-            try
-            {
-                await _client
-                    .Cypher.Match("(c:City)")
-                    .Where((City c) => c.id == id)
-                    .Set("c = $city")
-                    .WithParam("city", city)
-                    .ExecuteWithoutResultsAsync();
-                
-                return Ok(city);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating city.");
-                return StatusCode(500, "Internal server error");
-            }
+            await _client
+                .Cypher.Match("(c:City)")
+                .Where((City c) => c.city_id == id)
+                .Set("c = $city")
+                .WithParam("city", city)
+                .ExecuteWithoutResultsAsync();
+            return Ok();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                // Delete relationships first
-                await _client
-                    .Cypher
-                    .Match("(start:City)-[r:HAS_ROUTE|HAS_LINE]-(end:City)")
-                    .Where((City start) => start.id == id)
-                    .OrWhere((City end) => end.id == id)
-                    .Delete("r")
-                    .ExecuteWithoutResultsAsync();
+            await _client
+                .Cypher
+                .Match("(start:City)-[r:HAS_ROUTE]-(end:City)")
+                .Where((City start) => start.city_id == id)
+                .OrWhere((City end) => end.city_id == id)
+                .Delete("r")
+                .ExecuteWithoutResultsAsync();
 
-                // Delete the city node
-                await _client
-                    .Cypher.Match("(c:City)")
-                    .Where((City c) => c.id == id)
-                    .Delete("c")
-                    .ExecuteWithoutResultsAsync();
-                
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting city.");
-                return StatusCode(500, "Internal server error");
-            }
+            await _client
+                .Cypher
+                .Match("(start:City)-[r:HAS_LINE]-(end:City)")
+                .Where((City start) => start.city_id == id)
+                .OrWhere((City end) => end.city_id == id)
+                .Delete("r")
+                .ExecuteWithoutResultsAsync();
+
+            await _client
+                .Cypher.Match("(c:City)")
+                .Where((City c) => c.city_id == id)
+                .Delete("c")
+                .ExecuteWithoutResultsAsync();
+            return Ok();
         }
     }
 }

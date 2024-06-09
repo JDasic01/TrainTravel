@@ -5,6 +5,6 @@ using System.ComponentModel.DataAnnotations;
 
 public class CityCSVModel
 {
-    public int id { get; set; }
-    public string name { get; set; }
+    public int city_id { get; set; }
+    public string city_name { get; set; }
 }

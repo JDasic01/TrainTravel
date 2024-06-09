@@ -39,8 +39,8 @@ namespace API.Controllers
                     {
                         var city = new City
                         {
-                            id = cityRecord.city_id,
-                            name = cityRecord.city_name,
+                            city_id = cityRecord.city_id,
+                            city_name = cityRecord.city_name,
                         };
 
                         await _client
@@ -72,29 +72,29 @@ namespace API.Controllers
                     {
                         var line = new Line
                         {
-                            id = lineRecord.line_id,
-                            name = lineRecord.line_name,
-                            startCityId = lineRecord.start_city_id,
-                            endCityId = lineRecord.end_city_id,
+                            line_id = lineRecord.line_id,
+                            line_name = lineRecord.line_name,
+                            start_city_id = lineRecord.start_city_id,
+                            end_city_id = lineRecord.end_city_id,
                         };
 
                         await _client
-                            .Cypher.Match("(c1:City { city_id: " + line.startCityId + " })")
-                            .Match("(c2:City { city_id: " + line.endCityId + " })")
+                            .Cypher.Match("(c1:City { city_id: " + line.start_city_id + " })")
+                            .Match("(c2:City { city_id: " + line.end_city_id + " })")
                             .Merge($"(c1)-[r1:HAS_LINE]->(c2)")
                             .Set(
-                                $"r1 = {{ line_id: {line.id}, line_name: '{line.name}' }}"
+                                $"r1 = {{ line_id: {line.line_id}, line_name: '{line.line_name}' }}"
                             )
                             .ExecuteWithoutResultsAsync();
 
-                        string[] parts = line.name.Split('-');
+                        string[] parts = line.line_name.Split('-');
                         var oppositeName = $"{parts[1]}-{parts[0]}";
                         await _client
-                            .Cypher.Match("(c2:City { city_id: " + line.endCityId + " })")
-                            .Match("(c1:City { city_id: " + line.startCityId + " })")
+                            .Cypher.Match("(c2:City { city_id: " + line.end_city_id + " })")
+                            .Match("(c1:City { city_id: " + line.start_city_id + " })")
                             .Merge($"(c2)-[r2:HAS_LINE]->(c1)")
                             .Set(
-                                $"r2 = {{ line_id: {line.id}, line_name: '{oppositeName}' }}"
+                                $"r2 = {{ line_id: {line.line_id}, line_name: '{oppositeName}' }}"
                             )
                             .ExecuteWithoutResultsAsync();
                     }
@@ -122,9 +122,9 @@ namespace API.Controllers
                     {
                         var trainRoute = new TrainRoute
                         {
-                            id = trainRouteRecord.route_id,
-                            lineId = trainRouteRecord.line_id,
-                            citiesId = ParseCityIds(trainRouteRecord.city_ids),
+                            route_id = trainRouteRecord.route_id,
+                            line_id = trainRouteRecord.line_id,
+                            city_ids = ParseCityIds(trainRouteRecord.city_ids),
                             mileage = ParseMileage(trainRouteRecord.mileage),
                         };
 
@@ -132,16 +132,16 @@ namespace API.Controllers
                             .Cypher.Create(
                                 "(t:TrainRoute {route_id: $route_id, line_id: $line_id, city_ids: $city_ids, mileage: $mileage})"
                             )
-                            .WithParam("route_id", trainRoute.id)
-                            .WithParam("line_id", trainRoute.lineId)
+                            .WithParam("route_id", trainRoute.route_id)
+                            .WithParam("line_id", trainRoute.line_id)
                             .WithParam("city_ids", trainRouteRecord.city_ids)
                             .WithParam("mileage", trainRouteRecord.mileage)
                             .ExecuteWithoutResultsAsync();
 
-                        for (int i = 0; i < trainRoute.citiesId.Count - 1; i++)
+                        for (int i = 0; i < trainRoute.city_ids.Count - 1; i++)
                         {
-                            int currentCityId = trainRoute.citiesId[i];
-                            int nextCityId = trainRoute.citiesId[i + 1];
+                            int currentCityId = trainRoute.city_ids[i];
+                            int nextCityId = trainRoute.city_ids[i + 1];
 
                             await _client
                                 .Cypher.Match(
@@ -152,7 +152,7 @@ namespace API.Controllers
                                     $"(c{currentCityId})-[r{currentCityId}{nextCityId}:HAS_ROUTE]->(c{nextCityId})"
                                 )
                                 .Set(
-                                    $"r{currentCityId}{nextCityId} = {{ mileage: {trainRoute.mileage[i]}, line_id: {trainRoute.lineId} }}"
+                                    $"r{currentCityId}{nextCityId} = {{ mileage: {trainRoute.mileage[i]}, line_id: {trainRoute.line_id} }}"
                                 )
                                 .ExecuteWithoutResultsAsync();
 
@@ -165,7 +165,7 @@ namespace API.Controllers
                                     $"(c{nextCityId})-[r{nextCityId}{currentCityId}:HAS_ROUTE]->(c{currentCityId})"
                                 )
                                 .Set(
-                                    $"r{nextCityId}{currentCityId} = {{ mileage: {trainRoute.mileage[i]}, line_id: {trainRoute.lineId} }}"
+                                    $"r{nextCityId}{currentCityId} = {{ mileage: {trainRoute.mileage[i]}, line_id: {trainRoute.line_id} }}"
                                 )
                                 .ExecuteWithoutResultsAsync();
                         }
@@ -200,6 +200,7 @@ namespace API.Controllers
                     .Cypher.OptionalMatch("(n)<-[r]-()")
                     .Delete("r, n")
                     .ExecuteWithoutResultsAsync();
+                // Gornji valjda brise samo povezane nodeove
                 await _client.Cypher.OptionalMatch("(n)").Delete("n").ExecuteWithoutResultsAsync();
                 return Ok("All data deleted sucessfuly");
             }

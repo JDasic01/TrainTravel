@@ -1,12 +1,12 @@
 public class Message
 {
-    public int startCityId { get; set; }
-    public int endCityId { get; set; }
+    public int start_city_id { get; set; }
+    public int end_city_id { get; set; }
 
-    public Message(int startCityId, int endCityId)
+    public Message(int start_city_id, int end_city_id)
     {
-        this.startCityId = startCityId;
-        this.endCityId = endCityId;
+        this.start_city_id = start_city_id;
+        this.end_city_id = end_city_id;
     }
 
     public Message()
