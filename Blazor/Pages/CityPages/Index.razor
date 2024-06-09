@@ -34,11 +34,17 @@
     </table>
 
 @code {
-    private City[] cities = new City[0];
+    private GetCity[] cities = new GetCity[0];
 
     protected override async Task OnInitializedAsync()
     {
-        cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
+        cities = await HttpClient.GetFromJsonAsync<GetCity?[]>("http://api:8082/City");
+        foreach(var city in cities)
+        {
+            Console.WriteLine(city.city_id);
+            Console.WriteLine(city.availableRoutes);
+            Console.WriteLine(city.city_name);
+        }
     }
 
     private async Task DeleteData(int id)

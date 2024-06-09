@@ -28,19 +28,12 @@ namespace API.Controllers
             try
             {
                 var cities = await _client
-                    .Cypher.Match("(c:City)")
-                    .Return(c => new
-                    {
-                        c.As<City>().id,
-                        c.As<City>().name,
-                        c.As<City>().seeSection,
-                        c.As<City>().doSection,
-                        c.As<City>().guide,
-                        c.As<City>().availableRoutes
-                    }).ResultsAsync;
+                    .Cypher.Match("(n:City)")
+                    .Return(n => n.As<City>())
+                    .ResultsAsync;
+                    return Ok(cities);
+                }
 
-                return Ok(cities);
-            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving cities.");

@@ -26,6 +26,11 @@
 <InputFile OnChange="HandleRouteFileUpload" disabled="@(!CanUploadRoutes)"/>
 <button class="btn btn-primary" @onclick="SubmitRoutes" disabled="@(!CanUploadRoutes)">Submit</button>
 
+
+<button class="btn btn-primary" @onclick="WebscrapeData" disabled="@(!CanUploadRoutes)">Scrape cities wikidata</button>
+<button class="btn btn-primary" @onclick="TouristGuide" disabled="@(!CanUploadRoutes)">Create tourist guides</button>
+<button class="btn btn-primary" @onclick="AudioGuide" disabled="@(!CanUploadRoutes)">Create audio guides</button>
+
 @code {
     private bool CanResetDatabase => cities.Length != 0 || routes.Length != 0 || lines.Length != 0;
     private bool CanUploadCities => cities.Length == 0;
@@ -191,5 +196,17 @@
         {
             uploadLineStatus = "Please select a file before submitting.";
         }
+    }
+
+    private async Task WebscrapeData()
+    {
+    }
+
+    private async Task TouristGuide()
+    {
+    }
+
+    private async Task AudioGuide()
+    {
     }
 }

@@ -19,7 +19,7 @@ else
             <legend>Update city @InputName</legend>
             <div class="form-group">
                 <label for="Name">City Name:</label>
-                <input type="text" @bind="city.cityName" />
+                <input type="text" @bind="city.city_name" />
             </div>
             <div class="form-group">
                 <label>&nbsp;</label>
@@ -34,7 +34,7 @@ else
 @code {
     private bool isLoading = true;
     private string InputName;
-    private bool CanUpdateCity => !string.IsNullOrEmpty(city.cityName) && InputName != city.cityName;
+    private bool CanUpdateCity => !string.IsNullOrEmpty(city.city_name) && InputName != city.city_name;
 
     [Parameter]
     public string id { get; set; }
@@ -45,7 +45,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         city = await HttpClient.GetFromJsonAsync<GetCity?>($"http://api:8082/City/{id}");
-        InputName = city.cityName;
+        InputName = city.city_name;
         isLoading = false;
     }
 
@@ -53,8 +53,8 @@ else
     {
         if (CanUpdateCity)
         {
-            update_city.city_id = city.cityId;
-            update_city.city_name = city.cityName;
+            update_city.city_id = city.city_id;
+            update_city.city_name = city.city_name;
 
             var response = await HttpClient.PutAsJsonAsync($"http://api:8082/City/{id}", update_city);
 

@@ -1,11 +1,203 @@
 line_id,line_name,start_city_id,end_city_id
-81,"Rijeka-Zagreb",1,2
-83,"Rijeka-Split",1,3
-85,"Rijeka-Dubrovnik",1,4
-87,"Zagreb-Split",2,3
-89,"Zagreb-Pula",2,5
-91,"Rijeka-Pula",1,5
-93,"Pula-Dubrovnik",5,4
-95,"Rijeka-Delnice",1,6
-97,"Delnice-Karlovac",6,7
-98,"Delnice-Zagreb",6,2
+301,"Rijeka-Zagreb",1,2
+302,"Rijeka-Split",1,3
+303,"Rijeka-Dubrovnik",1,4
+304,"Zagreb-Split",2,3
+305,"Zagreb-Pula",2,5
+306,"Rijeka-Pula",1,5
+307,"Pula-Dubrovnik",5,4
+308,"Rijeka-Delnice",1,6
+309,"Delnice-Karlovac",6,7
+310,"Delnice-Zagreb",6,2
+311,"Rijeka-Karlovac",1,7
+312,"Zagreb-Osijek",2,8
+313,"Split-Šibenik",3,10
+314,"Dubrovnik-Zadar",4,11
+315,"Pula-Sisak",5,12
+316,"Zagreb-Slavonski Brod",2,13
+317,"Osijek-Vukovar",8,14
+318,"Split-Makarska",3,15
+319,"Šibenik-Trogir",10,16
+320,"Zadar-Čakovec",11,17
+321,"Osijek-Virovitica",8,18
+322,"Zagreb-Koprivnica",2,19
+323,"Zagreb-Krapina",2,20
+324,"Osijek-Požega",8,21
+325,"Split-Sinj",3,22
+326,"Zadar-Benkovac",11,23
+327,"Zagreb-Samobor",2,24
+328,"Zagreb-Velika Gorica",2,25
+329,"Split-Imotski",3,26
+330,"Šibenik-Knin",10,27
+331,"Zadar-Novalja",11,28
+332,"Split-Solin",3,29
+333,"Split-Trogir",3,30
+334,"Split-Kaštela",3,31
+335,"Split-Metković",3,32
+336,"Zadar-Pag",11,33
+337,"Split-Omiš",3,34
+338,"Šibenik-Biograd na Moru",10,35
+339,"Split-Murter",3,36
+340,"Rijeka-Rab",1,37
+341,"Rijeka-Umag",1,38
+342,"Rijeka-Poreč",1,39
+343,"Rijeka-Rovinj",1,40
+344,"Rijeka-Pazin",1,41
+345,"Rijeka-Labin",1,42
+346,"Rijeka-Krk",1,43
+347,"Rijeka-Cres",1,44
+348,"Rijeka-Opatija",1,45
+349,"Rijeka-Bakar",1,46
+350,"Rijeka-Vrbovsko",1,48
+351,"Rijeka-Senj",1,49
+352,"Rijeka-Crikvenica",1,51
+353,"Rijeka-Selce",1,52
+354,"Rijeka-Medulin",1,53
+355,"Rijeka-Fužine",1,54
+356,"Rijeka-Mali Lošinj",1,55
+357,"Rijeka-Veli Lošinj",1,56
+358,"Rijeka-Novigrad",1,57
+359,"Rijeka-Buje",1,58
+360,"Rijeka-Buzet",1,59
+361,"Rijeka-Viškovo",1,60
+362,"Rijeka-Kastav",1,61
+363,"Rijeka-Matulji",1,62
+364,"Rijeka-Lovran",1,63
+365,"Rijeka-Mošćenička Draga",1,64
+366,"Split-Supetar",3,65
+367,"Split-Bol",3,66
+368,"Split-Stari Grad",3,67
+369,"Split-Hvar",3,68
+370,"Split-Jelsa",3,69
+371,"Split-Vis",3,70
+372,"Split-Komiža",3,71
+373,"Split-Supetar",3,72
+374,"Split-Pučišća",3,73
+375,"Split-Postira",3,74
+376,"Split-Opuzen",3,75
+377,"Split-Korčula",3,76
+378,"Split-Blato",3,77
+379,"Split-Vela Luka",3,78
+380,"Split-Lumbarda",3,79
+381,"Split-Orebić",3,80
+382,"Split-Ston",3,81
+383,"Split-Trilj",3,82
+384,"Split-Vrgorac",3,83
+385,"Split-Kaštel Stari",3,84
+386,"Split-Kaštel Novi",3,85
+387,"Split-Kaštel Štafilić",3,86
+388,"Split-Kaštel Lukšić",3,87
+389,"Split-Kaštel Kambelovac",3,88
+390,"Split-Kaštel Sućurac",3,89
+391,"Šibenik-Skradin",10,90
+392,"Split-Supetar",3,91
+393,"Split-Podgora",3,92
+394,"Split-Tučepi",3,93
+395,"Split-Baška Voda",3,94
+396,"Split-Brela",3,95
+397,"Split-Gradac",3,96
+398,"Split-Ploče",3,97
+399,"Split-Opuzen",3,98
+400,"Split-Neum",3,99
+401,"Split-Klek",3,100
+402,"Split-Zaostrog",3,101
+403,"Split-Drvenik",3,102
+404,"Split-Živogošće",3,103
+405,"Split-Igrane",3,104
+406,"Split-Podaca",3,105
+407,"Split-Bratus",3,106
+408,"Split-Promajna",3,107
+409,"Split-Baška Voda",3,108
+410,"Split-Brela",3,109
+411,"Split-Marina",3,110
+412,"Split-Rogoznica",3,111
+413,"Split-Primošten",3,112
+414,"Šibenik-Sveti Filip i Jakov",10,113
+415,"Zagreb-Sveta Nedelja",2,114
+416,"Zagreb-Dugo Selo",2,115
+417,"Zagreb-Ivanec",2,116
+418,"Zagreb-Lepoglava",2,117
+419,"Zagreb-Novi Marof",2,118
+420,"Zagreb-Varaždinske Toplice",2,119
+421,"Zagreb-Ludbreg",2,120
+422,"Zagreb-Prelog",2,121
+423,"Zagreb-Mursko Središće",2,122
+424,"Zagreb-Novi Golubovec",2,123
+425,"Zagreb-Zlatar",2,124
+426,"Zagreb-Oroslavje",2,125
+427,"Zagreb-Donja Stubica",2,126
+428,"Zagreb-Gornja Stubica",2,127
+429,"Zagreb-Klanjec",2,128
+430,"Zagreb-Pregrada",2,129
+431,"Zagreb-Huma na Sutli",2,130
+432,"Zagreb-Desinić",2,131
+433,"Zagreb-Đurmanec",2,132
+434,"Zagreb-Radonja",2,133
+435,"Zagreb-Veliko Trgovišće",2,134
+436,"Zagreb-Zaprešić",2,135
+437,"Zagreb-Jastrebarsko",2,136
+438,"Zagreb-Sveta Nedelja",2,137
+439,"Zagreb-Velika Gorica",2,138
+440,"Zagreb-Zaprešić",2,139
+441,"Zagreb-Sesvete",2,140
+442,"Zagreb-Bužin",2,141
+443,"Zagreb-Dubrava",2,142
+444,"Osijek-Slatina",8,143
+445,"Osijek-Đakovo",8,144
+446,"Osijek-Vinkovci",8,145
+447,"Osijek-Vukovar",8,146
+448,"Osijek-Ilok",8,147
+449,"Osijek-Beli Manastir",8,148
+450,"Osijek-Belišće",8,149
+451,"Osijek-Donji Miholjac",8,150
+452,"Osijek-Valpovo",8,151
+453,"Osijek-Našice",8,152
+454,"Osijek-Đurđenovac",8,153
+455,"Osijek-Bizovac",8,154
+456,"Osijek-Pitomača",8,155
+457,"Zagreb-Vrbovec",2,156
+458,"Zagreb-Čazma",2,157
+459,"Zagreb-Garešnica",2,158
+460,"Zagreb-Grubišno Polje",2,159
+461,"Zagreb-Daruvar",2,160
+462,"Zagreb-Kutina",2,161
+463,"Zagreb-Novska",2,162
+464,"Zagreb-Popovača",2,163
+465,"Split-Hvar",3,164
+466,"Split-Vis",3,165
+467,"Split-Stari Grad",3,166
+468,"Šibenik-Vodice",10,167
+469,"Šibenik-Prvić",10,168
+470,"Šibenik-Murter",10,169
+471,"Šibenik-Tisno",10,170
+472,"Šibenik-Betina",10,171
+473,"Šibenik-Pirovac",10,172
+474,"Šibenik-Jezera",10,173
+475,"Split-Supetar",3,174
+476,"Split-Bol",3,175
+477,"Split-Sumartin",3,176
+478,"Split-Postira",3,177
+479,"Split-Milna",3,178
+480,"Split-Povlja",3,179
+481,"Split-Nerežišća",3,180
+482,"Split-Pučišća",3,181
+483,"Split-Selca",3,182
+484,"Split-Sutivan",3,183
+485,"Split-Splitska",3,184
+486,"Split-Dol",3,185
+487,"Split-Škrip",3,186
+488,"Split-Dračevica",3,187
+489,"Split-Ložišća",3,188
+490,"Osijek-Županja",8,190
+491,"Osijek-Bošnjaci",8,191
+492,"Osijek-Vrbanja",8,192
+493,"Osijek-Gradište",8,193
+494,"Osijek-Gunja",8,194
+495,"Osijek-Čepin",8,195
+496,"Osijek-Belišće",8,196
+497,"Osijek-Đurđenovac",8,197
+498,"Osijek-Feričanci",8,198
+499,"Osijek-Gat",8,199
+500,"Osijek-Marijanci",8,200
+501,"Osijek-Petrijevci",8,201
+502,"Osijek-Sveti Đurađ",8,202
