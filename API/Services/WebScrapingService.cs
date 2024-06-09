@@ -1,10 +1,8 @@
 using API.Models;
 using HtmlAgilityPack;
 using Neo4jClient;
-using System;
-using System.Net.Http;
 using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 public class WebScrapingService
 {
@@ -24,7 +22,7 @@ public class WebScrapingService
         {
             var cities = await _graphClient.Cypher
                 .Match("(n:City)")
-                .Where("n.do_text IS NULL OR n.see_text IS NULL")
+                .Where("n.doext IS NULL OR n.see_text IS NULL")
                 .Return(n => n.As<City>())
                 .ResultsAsync;
 
@@ -45,7 +43,7 @@ public class WebScrapingService
                 var seeSectionContent = GetSectionContent(htmlDoc, "//*[@id='See']");
                 var doSectionContent = GetSectionContent(htmlDoc, "//*[@id='Do']");
 
-                (seeSectionContent, doSectionContent) = EnsureTokenLimit(city.name, seeSectionContent, doSectionContent);
+                (seeSectionContent, doSectionContent) = EnsureTokenLimit(seeSectionContent, doSectionContent);
                 Console.WriteLine($"see: {seeSectionContent}, do {doSectionContent}");
                 await SaveCitySectionsToDb(city.name, seeSectionContent, doSectionContent);
             }
@@ -74,15 +72,14 @@ public class WebScrapingService
         return null;
     }
 
-    private (string, string) EnsureTokenLimit(string cityName, string seeContent, string doContent)
+    private (string, string) EnsureTokenLimit(string seeContent, string doContent)
     {
         int tokenLimit = 850;
 
-        int cityNameTokens = cityName.Split(' ').Length;
         int seeContentTokens = seeContent.Split(' ').Length;
         int doContentTokens = doContent.Split(' ').Length;
 
-        int totalTokens = cityNameTokens + seeContentTokens + doContentTokens;
+        int totalTokens = seeContentTokens + doContentTokens;
 
         if (totalTokens > tokenLimit)
         {
@@ -92,7 +89,7 @@ public class WebScrapingService
             seeContent = string.Join(' ', seeContent.Split(' ').Take(seeContentLimit));
             doContent = string.Join(' ', doContent.Split(' ').Take(doContentLimit));
 
-            totalTokens = cityNameTokens + seeContent.Split(' ').Length + doContent.Split(' ').Length;
+            totalTokens = seeContent.Split(' ').Length + doContent.Split(' ').Length;
 
             if (totalTokens > tokenLimit)
             {
@@ -122,55 +119,70 @@ public class WebScrapingService
 
     public async void ScrapeStations()
     {
-        var url = "https://www.hzpp.hr/";
-        var response = await _httpClient.GetAsync(url);
-
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        try
         {
-            Console.WriteLine("URL not found.");
-            return;
-        }
+            var query = @"
+                [out:json];
+                (
+                    node['railway'='station'](42.3932,13.4937,46.5557,19.4269);
+                );
+                out body;
+            ";
 
-        var responseBody = await response.Content.ReadAsStringAsync();
-        HtmlDocument htmlDoc = new HtmlDocument();
-        htmlDoc.LoadHtml(responseBody);
+            var httpClient = new HttpClient();
+            var content = new StringContent(query);
 
-        // Get all data from the list //*[@id='ui-id-1']
-        var stationNodes = htmlDoc.DocumentNode.SelectNodes("//*[@id='ui-id-1']//li/a");
-        
-        if (stationNodes != null)
-        {
-            foreach (var node in stationNodes)
+            var response = await httpClient.PostAsync("https://overpass-api.de/api/interpreter", content);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            dynamic stations = JsonConvert.DeserializeObject(responseBody);
+            Console.WriteLine(responseBody);
+
+            foreach (var station in stations.elements)
             {
-                var stationName = node.InnerText.Trim();
-                Console.WriteLine(stationName);
-                // Save the station to the database
-                await SaveStationToDb(stationName);
+                string name = station.tags.name;
+                double lat = station.lat;
+                double lon = station.lon;
+
+                var queryGeocoding = @"
+                    [out:json];
+                    (
+                        node(around:1000,lat,lon)['place'~'city|town'];
+                        node(around:1000,lat,lon)['place'='country'];
+                    );
+                    out center;
+                ".Replace("lat", lat.ToString()).Replace("lon", lon.ToString());
+
+                var contentGeocoding = new StringContent(queryGeocoding);
+                var resp = await httpClient.PostAsync("https://overpass-api.de/api/interpreter", contentGeocoding);
+                resp.EnsureSuccessStatusCode();
+
+                var respBody = await resp.Content.ReadAsStringAsync();
+                dynamic result = JsonConvert.DeserializeObject(respBody);
+                Console.WriteLine(respBody);
+
+                var address = result.elements?[0].tags;
+                var country = address?.country?.ToString();
+                var town = address?.town?.ToString();
+
+                var stat = new Station(){
+                    name = name,
+                    latitude = lat,
+                    longitude = lon,
+                    country = country,
+                    town = town
+                };
+
+                await _graphClient.Cypher
+                    .Create("(s:Station $station)")
+                    .WithParam("station", stat)
+                    .ExecuteWithoutResultsAsync();
             }
         }
-        else
+        catch (Exception ex)
         {
-            Console.WriteLine("No stations found.");
+            Console.WriteLine($"An error occurred: {ex.Message}");
         }
-    }
-
-    private async Task SaveStationToDb(string stationName)
-    {
-        await _graphClient.Cypher
-            .Merge("(s:Station {station_name: $stationName})")
-            .OnCreate()
-            .Set("s.created_at = timestamp()")
-            .WithParam("stationName", stationName)
-            .ExecuteWithoutResultsAsync();
-    }
-
-    public class HuggingFaceResponse
-    {
-        public List<HuggingFaceChoice> choices { get; set; }
-    }
-
-    public class HuggingFaceChoice
-    {
-        public string text { get; set; }
     }
 }

@@ -1,6 +1,8 @@
 using API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Neo4jClient;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace API.Controllers
 {
@@ -23,12 +25,27 @@ namespace API.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var cities = await _client
-                .Cypher.Match("(n:City)")
-                .Return(n => n.As<City>())
-                .ResultsAsync;
+            try
+            {
+                var cities = await _client
+                    .Cypher.Match("(c:City)")
+                    .Return(c => new
+                    {
+                        c.As<City>().id,
+                        c.As<City>().name,
+                        c.As<City>().seeSection,
+                        c.As<City>().doSection,
+                        c.As<City>().guide,
+                        c.As<City>().availableRoutes
+                    }).ResultsAsync;
 
-            return Ok(cities);
+                return Ok(cities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving cities.");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         [HttpGet("{id}")]
@@ -60,8 +77,8 @@ namespace API.Controllers
                             .Lines.Select(line => new
                             {
                                 LineId = line.id,
-                                EndCityId = item.OtherCities.First().id,
-                                EndCityName = item.OtherCities.First().name
+                                EndCityId = item.OtherCities.FirstOrDefault()?.id,
+                                EndCityName = item.OtherCities.FirstOrDefault()?.name
                             })
                             .ToList()
                     })
@@ -84,50 +101,71 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] City city)
         {
-            await _client
-                .Cypher.Create("(c:City $city)")
-                .WithParam("city", city)
-                .ExecuteWithoutResultsAsync();
-            return Ok();
+            try
+            {
+                await _client
+                    .Cypher.Create("(c:City $city)")
+                    .WithParam("city", city)
+                    .ExecuteWithoutResultsAsync();
+                
+                return Ok(city);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating city.");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] City city)
         {
-            await _client
-                .Cypher.Match("(c:City)")
-                .Where((City c) => c.id == id)
-                .Set("c = $city")
-                .WithParam("city", city)
-                .ExecuteWithoutResultsAsync();
-            return Ok();
+            try
+            {
+                await _client
+                    .Cypher.Match("(c:City)")
+                    .Where((City c) => c.id == id)
+                    .Set("c = $city")
+                    .WithParam("city", city)
+                    .ExecuteWithoutResultsAsync();
+                
+                return Ok(city);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating city.");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            await _client
-                .Cypher
-                .Match("(start:City)-[r:HAS_ROUTE]-(end:City)")
-                .Where((City start) => start.id == id)
-                .OrWhere((City end) => end.id == id)
-                .Delete("r")
-                .ExecuteWithoutResultsAsync();
+            try
+            {
+                // Delete relationships first
+                await _client
+                    .Cypher
+                    .Match("(start:City)-[r:HAS_ROUTE|HAS_LINE]-(end:City)")
+                    .Where((City start) => start.id == id)
+                    .OrWhere((City end) => end.id == id)
+                    .Delete("r")
+                    .ExecuteWithoutResultsAsync();
 
-            await _client
-                .Cypher
-                .Match("(start:City)-[r:HAS_LINE]-(end:City)")
-                .Where((City start) => start.id == id)
-                .OrWhere((City end) => end.id == id)
-                .Delete("r")
-                .ExecuteWithoutResultsAsync();
-
-            await _client
-                .Cypher.Match("(c:City)")
-                .Where((City c) => c.id == id)
-                .Delete("c")
-                .ExecuteWithoutResultsAsync();
-            return Ok();
+                // Delete the city node
+                await _client
+                    .Cypher.Match("(c:City)")
+                    .Where((City c) => c.id == id)
+                    .Delete("c")
+                    .ExecuteWithoutResultsAsync();
+                
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting city.");
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }
