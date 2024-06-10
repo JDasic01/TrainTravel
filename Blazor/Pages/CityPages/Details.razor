@@ -3,6 +3,7 @@
 @using System.Net.Http.Json
 @using Blazor.Data
 @inject NavigationManager Navigation
+@inject IJSRuntime js;
 
 <PageTitle>Update City</PageTitle>
 
@@ -17,12 +18,9 @@ else
     <h1>@city.city_name</h1>
     <br/>
 
-    @if (!string.IsNullOrEmpty(city.guide_en))
-    {
         <h2>English Guide</h2>
         <p>@city.guide_en</p>
-        <button class="btn btn-secondary" @onclick="() => DownloadAudioGuide(city.city_id, 'en-US')">Download English Audio Guide</button>
-    }
+        <a href=@audioUrl target="_blank">Open guide</a>
 
     @if (city.availableRoutes.Count > 0)
     {
@@ -43,22 +41,12 @@ else
     public string id { get; set; }
     private GetCity city = new GetCity();
     private bool isLoading = true;
+    private string audioUrl = "";
 
     protected override async Task OnInitializedAsync()
     {
         city = await HttpClient.GetFromJsonAsync<GetCity?>($"http://api:8082/City/{id}");
+        audioUrl = $"http://localhost:8080/files/{id}-en-US.mp3";
         isLoading = false;
-    }
-
-    private async Task DownloadAudioGuide(int cityId, string langCode)
-    {
-        var fileName = $"{cityId}-{langCode}.mp3";
-        var response = await HttpClient.GetAsync($"http://api:8082/api/audioguide/{fileName}");
-
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsByteArrayAsync();
-            var base64Content = Convert.ToBase64String(content);
-        }
     }
 }
