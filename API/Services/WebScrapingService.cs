@@ -1,7 +1,6 @@
 using API.Models;
 using Neo4jClient;
 using HtmlAgilityPack;
-using Neo4jClient;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -34,7 +33,7 @@ public class WebScrapingService
             {
                 var url = _base_url + city.city_name;    
                 var response = await client.GetAsync(url);
-
+                Console.WriteLine("WebScraping", city.city_name);
                 if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
                     return;
@@ -50,10 +49,7 @@ public class WebScrapingService
                 {
                     (seeSectionContent, doSectionContent) = EnsureTokenLimit(seeSectionContent, doSectionContent);
                     await SaveCitySectionsToDb(city.city_name, seeSectionContent, doSectionContent);
-                }
-                
-
-                
+                }                
             }
         }
         catch (Exception ex)

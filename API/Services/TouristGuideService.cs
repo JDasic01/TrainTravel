@@ -1,45 +1,60 @@
-using Neo4jClient;
-using System;
-using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
+using Neo4jClient;
 using API.Models;
+using System.Net.Http;
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Threading.Tasks;
 
-public class TouristGuideService
+
+namespace API.Services
 {
-    private readonly IGraphClient _graphClient;
-    private readonly HttpClient _httpClient;
-    private readonly string _huggingFaceApiUrl = "https://api-inference.huggingface.co/models/Qiliang/bart-large-cnn-samsum-ChatGPT_v3";
-    private readonly string _apiToken;
-
-    public TouristGuideService(IGraphClient graphClient, HttpClient httpClient, string apiToken)
+    public class TouristGuideService
     {
-        _graphClient = graphClient;
-        _httpClient = httpClient;
-        _apiToken = apiToken;
-    }
+        private readonly IGraphClient _graphClient;
+        private readonly HttpClient _httpClient;
+        private readonly string _huggingFaceApiUrl = "https://api-inference.huggingface.co/models/philschmid/bart-large-cnn-samsum";
+        private readonly string _apiToken = "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";
 
-    public async void GetTouristGuideAsync()
-    {
-        try
+        public TouristGuideService(IGraphClient graphClient, HttpClient httpClient)
+        {
+            _graphClient = graphClient;
+            _httpClient = httpClient;
+        }
+
+        public async Task GetTouristGuideAsync()
         {
             var cities = await _graphClient.Cypher
-            .Match("(n:City)")
-            .Where("n.english_guide IS NULL")
-            .Return(n => n.As<City>())
-            .ResultsAsync;
+                        .Match("(n:City)")
+                        .Where("n.guide_en IS NULL")
+                        .Return(n => n.As<City>())
+                        .ResultsAsync;
 
-            foreach(var city in cities)
+                        foreach(var city in cities)
+                        {
+                            Console.WriteLine("TouristGuide", city.city_name);
+
+                            if((city.see_text != null || city.do_text != null) && city.guide_en == null)
+                            {
+                                var guide = await GetCityTouristGuideAsync(city.city_name, city.see_text, city.do_text);
+                                city.guide_en = guide;
+                                await _graphClient
+                                    .Cypher.Match("(c:City)")
+                                    .Where((City c) => c.city_id == city.city_id)
+                                    .Set("c = $city")
+                                    .WithParam("city", city)
+                                    .ExecuteWithoutResultsAsync();  
+                            }
+                        }
+        }
+
+        public async Task<string> GetCityTouristGuideAsync(string city_name, string see_text, string do_text)
+        {
+            try
             {
-
-                if (city.see_text == null || city.do_text == null)
-                {
-                    continue;
-                }
-
-                var prompt = $"You are a tourist guide for the city {city.city_name}. Here are some highlights to see: {city.see_text}, and things to do: {city.do_text}. Generate a tourist guide plan based on this information.";
+                var prompt = $"You are a tourist guide for the city {city_name}. Here are some highlights to see: {see_text}, and things to do: {do_text}. Generate a tourist guide plan based on this information.";
 
                 var payload = new
                 {
@@ -51,32 +66,36 @@ public class TouristGuideService
                 };
 
                 var requestContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "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");
+                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiToken);
 
                 var response = await _httpClient.PostAsync(_huggingFaceApiUrl, requestContent);
 
-                response.EnsureSuccessStatusCode();
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<List<HuggingFaceResponse>>(responseContent);
+                    var generatedText = result.FirstOrDefault()?.summary_text;
 
-                var responseContent = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<HuggingFaceResponse>(responseContent);
+                    return generatedText;
+                }
+                else if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
+                {
+                    await Task.Delay(80000); // a bit more than the time it loads the model
+                    await GetCityTouristGuideAsync(city_name, see_text, do_text);
+                }
+                
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception occurred: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            }
+            return null;
         }
-        catch (Exception ex)
+
+        public class HuggingFaceResponse
         {
-            Console.WriteLine($"Exception occurred: {ex.Message}");
-            Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            public string summary_text { get; set; }
         }
     }
-
-
-    public class HuggingFaceResponse
-    {
-        public List<HuggingFaceChoice> choices { get; set; }
-    }
-
-    public class HuggingFaceChoice
-    {
-        public string text { get; set; }
-    }
-
 }
