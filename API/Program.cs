@@ -72,7 +72,7 @@ builder.Services.AddSingleton<TouristGuideService>(provider =>
     var configuration = provider.GetRequiredService<IConfiguration>();
     var apiToken = configuration["HuggingFace:ApiToken"];
     
-    return new TouristGuideService(graphClient, httpClient, apiToken);
+    return new TouristGuideService(graphClient, httpClient);
 });
 
 builder.Services.AddSingleton<WebScrapingService>(provider =>
