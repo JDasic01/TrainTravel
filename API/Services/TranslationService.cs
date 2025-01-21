@@ -14,6 +14,8 @@ public class TranslationService
 {
     private readonly IGraphClient _graphClient;
     private readonly HttpClient _httpClient;
+    private static string _key;
+    private static string _secret;
 
     public TranslationService(IGraphClient graphClient, HttpClient httpClient)
     {

@@ -13,6 +13,8 @@ public class TextToSpeechService
 {
     private readonly IGraphClient _graphClient;
     private readonly HttpClient _httpClient;
+    private static string _key;
+    private static string _secret;
     private static readonly RegionEndpoint _region = RegionEndpoint.USEast1;
 
     public TextToSpeechService(IGraphClient graphClient, HttpClient httpClient)
