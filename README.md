@@ -9,6 +9,4 @@ API - localhost:8082
 
 TODO:
 
-- service travel guide, send data to paraphrase to gpt
-- service for translating to german, italian
-- servive text to speech for german, italian, english
+1. read all data from PDF- extract names of stations and possible lines
