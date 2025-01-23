@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  db:
+    image: neo4j:latest 
+    restart: always
+    ports:
+      - "7687:7687" 
+    environment:
+    - NEO4J_AUTH=none

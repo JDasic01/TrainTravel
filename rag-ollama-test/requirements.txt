@@ -1,0 +1,12 @@
+langchain 
+langchain_core
+langchain-community 
+langchain-ollama 
+langchain-experimental 
+neo4j 
+tiktoken 
+yfiles_jupyter_graphs 
+python-dotenv
+uvicorn
+fastapi
+pydantic
