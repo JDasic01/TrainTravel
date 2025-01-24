@@ -7,6 +7,17 @@ Blazor - localhost:8081
 API - localhost:8082
 - for development UI -> localhost:8082/swagger
 
-TODO:
+**Dataset for finetuning**:
+WikiVoyage.xml used for webscraping Wikivoyage
 
-1. read all data from PDF- extract names of stations and possible lines
+**Finetuning**
+- HuggingFace llama2, validate with mlflow with llama3?
+- RAG with llama2
+- MlFlow with RAG
+
+**Gradio ChatBot**
+- finetuned model deployed to hugging face and used in blazor app
+
+
+**Dataset for app**:
+Webscraping VisitCroatia.
