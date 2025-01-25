@@ -1,0 +1,15 @@
+artifact_uri: file:///home/agata/Desktop/Faks_3_semestar/Inteligentni_informaticki_sustavi/mlruns/824195555069699498/277bec6781e440a6a89cf1e23a5a701c/artifacts
+end_time: 1737842330648
+entry_point_name: ''
+experiment_id: '824195555069699498'
+lifecycle_stage: active
+run_id: 277bec6781e440a6a89cf1e23a5a701c
+run_name: bald-horse-135
+run_uuid: 277bec6781e440a6a89cf1e23a5a701c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1737842330609
+status: 4
+tags: []
+user_id: agata
