@@ -74,9 +74,9 @@ else
     {
         try
         {
-            cities = await HttpClient.GetFromJsonAsync<City?[]>("/City");
-            lines = await HttpClient.GetFromJsonAsync<Line?[]>("/Line");
-            routes = await HttpClient.GetFromJsonAsync<TrainRoute?[]>("/TrainRoute");
+            cities = await HttpClient.GetFromJsonAsync<City?[]>("https://dolphin-app-df2gw.ondigitalocean.app/api/City");
+            lines = await HttpClient.GetFromJsonAsync<Line?[]>("https://dolphin-app-df2gw.ondigitalocean.app/api/Line");
+            routes = await HttpClient.GetFromJsonAsync<TrainRoute?[]>("https://dolphin-app-df2gw.ondigitalocean.app/api/TrainRoute");
         }
         catch(Exception ex)
         {
@@ -86,7 +86,7 @@ else
 
     private async Task DeleteAllData()
     {
-        var response = await HttpClient.PostAsync("/csv-file-upload/delete-data", null);
+        var response = await HttpClient.PostAsync("https://dolphin-app-df2gw.ondigitalocean.app/api/csv-file-upload/delete-data", null);
 
         if (response.IsSuccessStatusCode)
         {
@@ -139,7 +139,7 @@ else
             {
                 content.Add(new StreamContent(selectedCityFile.OpenReadStream()), "formFile", selectedCityFile.Name);
 
-                var response = await HttpClient.PostAsync("/csv-file-upload/upload-cities", content);
+                var response = await HttpClient.PostAsync("https://dolphin-app-df2gw.ondigitalocean.app/api/csv-file-upload/upload-cities", content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -168,7 +168,7 @@ else
             {
                 content.Add(new StreamContent(selectedRouteFile.OpenReadStream()), "formFile", selectedRouteFile.Name);
 
-                var response = await HttpClient.PostAsync("/csv-file-upload/upload-train-routes", content);
+                var response = await HttpClient.PostAsync("https://dolphin-app-df2gw.ondigitalocean.app/api/csv-file-upload/upload-train-routes", content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -197,7 +197,7 @@ else
             {
                 content.Add(new StreamContent(selectedLineFile.OpenReadStream()), "formFile", selectedLineFile.Name);
 
-                var response = await HttpClient.PostAsync("/csv-file-upload/upload-lines", content);
+                var response = await HttpClient.PostAsync("https://dolphin-app-df2gw.ondigitalocean.app/api/csv-file-upload/upload-lines", content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -220,6 +220,6 @@ else
 
     private async Task StartServices()
     {
-        var response = await HttpClient.GetAsync("/Services/StartServices");
+        var response = await HttpClient.GetAsync("https://dolphin-app-df2gw.ondigitalocean.app/api/Services/StartServices");
     }
 }
