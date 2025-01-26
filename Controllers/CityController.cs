@@ -25,15 +25,19 @@ namespace API.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            try
+        try
+        {
+            var cities = await _client
+                .Cypher.Match("(n:City)")
+                .Return(n => n.As<City>())
+                .ResultsAsync;
+               
+            if (cities == null || !cities.Any())
             {
-                var cities = await _client
-                    .Cypher.Match("(n:City)")
-                    .Return(n => n.As<City>())
-                    .ResultsAsync;
-                    return Ok(cities);
-                }
-
+                return Ok(new List<City>()); // Return an empty array
+            }
+            return Ok(cities);
+        }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving cities.");
@@ -125,28 +129,40 @@ namespace API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            await _client
-                .Cypher
-                .Match("(start:City)-[r:HAS_ROUTE]-(end:City)")
-                .Where((City start) => start.city_id == id)
-                .OrWhere((City end) => end.city_id == id)
-                .Delete("r")
-                .ExecuteWithoutResultsAsync();
+            try
+            {
+                var cityExists = await _client
+                    .Cypher.Match("(c:City)")
+                    .Where((City c) => c.city_id == id)
+                    .Return(c => c.As<City>())
+                    .ResultsAsync;
 
-            await _client
-                .Cypher
-                .Match("(start:City)-[r:HAS_LINE]-(end:City)")
-                .Where((City start) => start.city_id == id)
-                .OrWhere((City end) => end.city_id == id)
-                .Delete("r")
-                .ExecuteWithoutResultsAsync();
+                if (!cityExists.Any())
+                {
+                    return NotFound($"City with ID {id} does not exist.");
+                }
 
-            await _client
-                .Cypher.Match("(c:City)")
-                .Where((City c) => c.city_id == id)
-                .Delete("c")
-                .ExecuteWithoutResultsAsync();
-            return Ok();
+                // Delete relationships and node
+                await _client
+                    .Cypher.Match("(start:City)-[r:HAS_ROUTE|HAS_LINE]-(end:City)")
+                    .Where((City start) => start.city_id == id)
+                    .OrWhere((City end) => end.city_id == id)
+                    .Delete("r")
+                    .ExecuteWithoutResultsAsync();
+
+                await _client
+                    .Cypher.Match("(c:City)")
+                    .Where((City c) => c.city_id == id)
+                    .Delete("c")
+                    .ExecuteWithoutResultsAsync();
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting city.");
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }

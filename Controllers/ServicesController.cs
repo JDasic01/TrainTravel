@@ -35,9 +35,9 @@ namespace API.Controllers
         [HttpGet("StartServices")]
         public async void GetTouristGuideInfo()
         {
-            //_webScrapingService.GetCitiesData();
+            // _webScrapingService.GetCitiesData();
             // await _touristGuideService.GetTouristGuideAsync();
-            await _textToSpeechService.AudioGuideAsync();
+            // await _textToSpeechService.AudioGuideAsync();
         }
     }
 }
