@@ -42,7 +42,7 @@
             newCity.city_id = generateId();
             newCity.city_name = InputName;
 
-            var response = await HttpClient.PostAsJsonAsync("http://api:8082/City", newCity);
+            var response = await HttpClient.PostAsJsonAsync("/City", newCity);
 
             if (response.IsSuccessStatusCode)
             {

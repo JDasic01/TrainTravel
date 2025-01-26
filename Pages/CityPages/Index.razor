@@ -40,7 +40,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        cities = await HttpClient.GetFromJsonAsync<GetCity?[]>("http://api:8082/City");
+        cities = await HttpClient.GetFromJsonAsync<GetCity?[]>("/City");
         foreach(var city in cities)
         {
             Console.WriteLine(city.city_id);
@@ -51,7 +51,7 @@
 
     private async Task DeleteData(int id)
     {
-        var response = await HttpClient.DeleteAsync($"http://api:8082/City/{id}");
+        var response = await HttpClient.DeleteAsync($"/City/{id}");
 
         if (response.IsSuccessStatusCode)
         {

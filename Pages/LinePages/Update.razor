@@ -50,7 +50,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var lines = await HttpClient.GetFromJsonAsync<Line>($"http://api:8082/Line/{id}");
+        var lines = await HttpClient.GetFromJsonAsync<Line>($"/Line/{id}");
         line.line_name = lines.line_name;
         line.start_city_id = lines.start_city_id;
         line.end_city_id = lines.end_city_id;
@@ -61,7 +61,7 @@
     {
         try
         {
-            var response = await HttpClient.PostAsJsonAsync("http://api:8082/Line", line);
+            var response = await HttpClient.PostAsJsonAsync("/Line", line);
 
             if (response.IsSuccessStatusCode)
             {

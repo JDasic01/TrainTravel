@@ -40,12 +40,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        lines = await HttpClient.GetFromJsonAsync<Line[]>("http://api:8082/Line");
+        lines = await HttpClient.GetFromJsonAsync<Line[]>("/Line");
     }
 
     private async Task DeleteData(int id)
     {
-        var response = await HttpClient.DeleteAsync($"http://api:8082/Line/{id}");
+        var response = await HttpClient.DeleteAsync($"/Line/{id}");
 
         if (response.IsSuccessStatusCode)
         {

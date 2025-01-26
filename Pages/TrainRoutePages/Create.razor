@@ -52,7 +52,7 @@
     protected override async Task OnInitializedAsync()
     {
         IdGenerator = new Id();
-        lines = await HttpClient.GetFromJsonAsync<List<Line>>("http://api:8082/Line");
+        lines = await HttpClient.GetFromJsonAsync<List<Line>>("/Line");
     }
 
     private async Task OnSubmit()
@@ -64,7 +64,7 @@
             trainRoute.city_ids = cityIds;
             trainRoute.mileage = mileage;
 
-            var response = await HttpClient.PostAsJsonAsync("http://api:8082/TrainRoute", trainRoute);
+            var response = await HttpClient.PostAsJsonAsync("/TrainRoute", trainRoute);
 
             if (response.IsSuccessStatusCode)
             {

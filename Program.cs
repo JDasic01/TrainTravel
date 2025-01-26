@@ -3,9 +3,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddHttpClient("API", client => 
+builder.Services.AddScoped(sp => new HttpClient 
 {
-    client.BaseAddress = new Uri("http://api:8082");
+    BaseAddress = new Uri("https://dolphin-app-df2gw.ondigitalocean.app/api/8082");
 });
 
 builder.Services.AddSingleton<Id>();

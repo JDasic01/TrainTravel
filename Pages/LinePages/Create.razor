@@ -64,7 +64,7 @@
             line.end_city_id  = endCityId;
             line.mileage  = mileage;
 
-            var response = await HttpClient.PostAsJsonAsync("http://api:8082/Line", line);
+            var response = await HttpClient.PostAsJsonAsync("/Line", line);
 
             if (response.IsSuccessStatusCode)
             {

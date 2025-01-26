@@ -58,14 +58,14 @@
 
     private async Task LoadData()
     {
-        cities = await HttpClient.GetFromJsonAsync<City?[]>("http://api:8082/City");
-        lines = await HttpClient.GetFromJsonAsync<Line?[]>("http://api:8082/Line");
-        routes = await HttpClient.GetFromJsonAsync<TrainRoute?[]>("http://api:8082/TrainRoute");
+        cities = await HttpClient.GetFromJsonAsync<City?[]>("/City");
+        lines = await HttpClient.GetFromJsonAsync<Line?[]>("Line");
+        routes = await HttpClient.GetFromJsonAsync<TrainRoute?[]>("/TrainRoute");
     }
 
     private async Task DeleteAllData()
     {
-        var response = await HttpClient.PostAsync("http://api:8082/csv-file-upload/delete-data", null);
+        var response = await HttpClient.PostAsync("/csv-file-upload/delete-data", null);
 
         if (response.IsSuccessStatusCode)
         {
@@ -118,7 +118,7 @@
             {
                 content.Add(new StreamContent(selectedCityFile.OpenReadStream()), "formFile", selectedCityFile.Name);
 
-                var response = await HttpClient.PostAsync("http://api:8082/csv-file-upload/upload-cities", content);
+                var response = await HttpClient.PostAsync("/csv-file-upload/upload-cities", content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -147,7 +147,7 @@
             {
                 content.Add(new StreamContent(selectedRouteFile.OpenReadStream()), "formFile", selectedRouteFile.Name);
 
-                var response = await HttpClient.PostAsync("http://api:8082/csv-file-upload/upload-train-routes", content);
+                var response = await HttpClient.PostAsync("/csv-file-upload/upload-train-routes", content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -176,7 +176,7 @@
             {
                 content.Add(new StreamContent(selectedLineFile.OpenReadStream()), "formFile", selectedLineFile.Name);
 
-                var response = await HttpClient.PostAsync("http://api:8082/csv-file-upload/upload-lines", content);
+                var response = await HttpClient.PostAsync("/csv-file-upload/upload-lines", content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -199,6 +199,6 @@
 
     private async Task StartServices()
     {
-        var response = await HttpClient.GetAsync("http://api:8082/Services/StartServices");
+        var response = await HttpClient.GetAsync("/Services/StartServices");
     }
 }

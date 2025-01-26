@@ -55,9 +55,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        lines = await HttpClient.GetFromJsonAsync<List<Line>>("http://api:8082/Line");
+        lines = await HttpClient.GetFromJsonAsync<List<Line>>("/Line");
 
-        var existingRoute = await HttpClient.GetFromJsonAsync<TrainRoute>($"http://api:8082/TrainRoute/{Id}");
+        var existingRoute = await HttpClient.GetFromJsonAsync<TrainRoute>($"/TrainRoute/{Id}");
 
         if (existingRoute != null)
         {
@@ -80,7 +80,7 @@
             updatedTrainRoute.city_ids = cityIds;
             updatedTrainRoute.mileage = mileage;
 
-            var response = await HttpClient.PutAsJsonAsync($"http://api:8082/TrainRoute/{Id}", updatedTrainRoute);
+            var response = await HttpClient.PutAsJsonAsync($"/TrainRoute/{Id}", updatedTrainRoute);
 
             if (response.IsSuccessStatusCode)
             {

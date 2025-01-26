@@ -44,7 +44,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        city = await HttpClient.GetFromJsonAsync<GetCity?>($"http://api:8082/City/{id}");
+        city = await HttpClient.GetFromJsonAsync<GetCity?>($"/City/{id}");
         InputName = city.city_name;
         isLoading = false;
     }
@@ -56,7 +56,7 @@ else
             update_city.city_id = city.city_id;
             update_city.city_name = city.city_name;
 
-            var response = await HttpClient.PutAsJsonAsync($"http://api:8082/City/{id}", update_city);
+            var response = await HttpClient.PutAsJsonAsync($"/City/{id}", update_city);
 
             if (response.IsSuccessStatusCode)
             {

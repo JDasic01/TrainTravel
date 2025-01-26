@@ -45,7 +45,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        city = await HttpClient.GetFromJsonAsync<GetCity?>($"http://api:8082/City/{id}");
+        city = await HttpClient.GetFromJsonAsync<GetCity?>($"/City/{id}");
         audioUrl = $"http://localhost:8080/files/{id}-en-US.mp3";
         isLoading = false;
     }
