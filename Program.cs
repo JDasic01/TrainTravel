@@ -4,9 +4,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped(sp => new HttpClient 
-{
-    BaseAddress = new Uri("https://dolphin-app-df2gw.ondigitalocean.app/api/8082");
-});
+    {
+        BaseAddress = new Uri("https://dolphin-app-df2gw.ondigitalocean.app/api/8082")
+    });
 
 builder.Services.AddSingleton<Id>();
 
