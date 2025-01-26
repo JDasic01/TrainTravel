@@ -36,7 +36,7 @@ namespace API.Controllers
 
                 if (relations == null || !relations.Any())
                 {
-                    return Ok(new { message = "No lines found in the database.", data = new object[] { } });
+                    return Ok(new List<Line>()); 
                 }
 
                 return Ok(relations);
