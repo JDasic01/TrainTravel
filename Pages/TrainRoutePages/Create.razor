@@ -52,7 +52,7 @@
     protected override async Task OnInitializedAsync()
     {
         IdGenerator = new Id();
-        lines = await HttpClient.GetFromJsonAsync<List<Line>>("/Line");
+        lines = await HttpClient.GetFromJsonAsync<List<Line>>("https://dolphin-app-df2gw.ondigitalocean.app/api/Line");
     }
 
     private async Task OnSubmit()
@@ -64,7 +64,7 @@
             trainRoute.city_ids = cityIds;
             trainRoute.mileage = mileage;
 
-            var response = await HttpClient.PostAsJsonAsync("/TrainRoute", trainRoute);
+            var response = await HttpClient.PostAsJsonAsync("https://dolphin-app-df2gw.ondigitalocean.app/api/TrainRoute", trainRoute);
 
             if (response.IsSuccessStatusCode)
             {

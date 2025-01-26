@@ -53,7 +53,7 @@ else
     {
         try
         {
-            lines = await HttpClient.GetFromJsonAsync<Line[]>("/Line");
+            lines = await HttpClient.GetFromJsonAsync<Line[]>("https://dolphin-app-df2gw.ondigitalocean.app/api/Line");
         }
         catch (Exception ex)
         {
@@ -68,7 +68,7 @@ else
 
     private async Task DeleteData(int id)
     {
-        var response = await HttpClient.DeleteAsync($"/Line/{id}");
+        var response = await HttpClient.DeleteAsync($"https://dolphin-app-df2gw.ondigitalocean.app/api/Line/{id}");
 
         if (response.IsSuccessStatusCode)
         {

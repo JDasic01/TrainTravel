@@ -50,7 +50,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var lines = await HttpClient.GetFromJsonAsync<Line>($"/Line/{id}");
+        var lines = await HttpClient.GetFromJsonAsync<Line>($"https://dolphin-app-df2gw.ondigitalocean.app/api/Line/{id}");
         line.line_name = lines.line_name;
         line.start_city_id = lines.start_city_id;
         line.end_city_id = lines.end_city_id;
@@ -61,7 +61,7 @@
     {
         try
         {
-            var response = await HttpClient.PostAsJsonAsync("/Line", line);
+            var response = await HttpClient.PostAsJsonAsync("https://dolphin-app-df2gw.ondigitalocean.app/api/Line", line);
 
             if (response.IsSuccessStatusCode)
             {

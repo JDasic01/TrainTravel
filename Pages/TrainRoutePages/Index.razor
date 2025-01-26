@@ -66,9 +66,9 @@ else
     {
         try
         {
-            trainRoutes = await HttpClient.GetFromJsonAsync<TrainRoute[]>("/TrainRoute");
-            cities = await HttpClient.GetFromJsonAsync<City[]>("/City");
-            lines = await HttpClient.GetFromJsonAsync<Line[]>("/Line");
+            trainRoutes = await HttpClient.GetFromJsonAsync<TrainRoute[]>("https://dolphin-app-df2gw.ondigitalocean.app/api/TrainRoute");
+            cities = await HttpClient.GetFromJsonAsync<City[]>("https://dolphin-app-df2gw.ondigitalocean.app/api/City");
+            lines = await HttpClient.GetFromJsonAsync<Line[]>("https://dolphin-app-df2gw.ondigitalocean.app/api/Line");
             isLoading = false;
         }
         catch (Exception ex)
@@ -84,7 +84,7 @@ else
 
     private async Task DeleteData(int id)
     {
-        var response = await HttpClient.DeleteAsync($"/TrainRoute/{id}");
+        var response = await HttpClient.DeleteAsync($"https://dolphin-app-df2gw.ondigitalocean.app/api/TrainRoute/{id}");
 
         if (response.IsSuccessStatusCode)
         {

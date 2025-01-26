@@ -42,7 +42,7 @@
             newCity.city_id = generateId();
             newCity.city_name = InputName;
 
-            var response = await HttpClient.PostAsJsonAsync("/City", newCity);
+            var response = await HttpClient.PostAsJsonAsync("https://dolphin-app-df2gw.ondigitalocean.app/api/City", newCity);
 
             if (response.IsSuccessStatusCode)
             {

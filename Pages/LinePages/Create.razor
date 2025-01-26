@@ -64,7 +64,7 @@
             line.end_city_id  = endCityId;
             line.mileage  = mileage;
 
-            var response = await HttpClient.PostAsJsonAsync("/Line", line);
+            var response = await HttpClient.PostAsJsonAsync("https://dolphin-app-df2gw.ondigitalocean.app/api/Line", line);
 
             if (response.IsSuccessStatusCode)
             {

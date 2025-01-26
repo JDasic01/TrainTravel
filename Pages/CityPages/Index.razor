@@ -53,7 +53,7 @@ else
     {
         try
         {
-            cities = await HttpClient.GetFromJsonAsync<GetCity?[]>("/City");
+            cities = await HttpClient.GetFromJsonAsync<GetCity?[]>("https://dolphin-app-df2gw.ondigitalocean.app/api/City");
             isLoading = false;
         }
         catch (Exception ex)

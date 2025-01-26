@@ -55,9 +55,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        lines = await HttpClient.GetFromJsonAsync<List<Line>>("/Line");
+        lines = await HttpClient.GetFromJsonAsync<List<Line>>("https://dolphin-app-df2gw.ondigitalocean.app/api/Line");
 
-        var existingRoute = await HttpClient.GetFromJsonAsync<TrainRoute>($"/TrainRoute/{Id}");
+        var existingRoute = await HttpClient.GetFromJsonAsync<TrainRoute>($"https://dolphin-app-df2gw.ondigitalocean.app/api/TrainRoute/{Id}");
 
         if (existingRoute != null)
         {
@@ -80,7 +80,7 @@
             updatedTrainRoute.city_ids = cityIds;
             updatedTrainRoute.mileage = mileage;
 
-            var response = await HttpClient.PutAsJsonAsync($"/TrainRoute/{Id}", updatedTrainRoute);
+            var response = await HttpClient.PutAsJsonAsync($"https://dolphin-app-df2gw.ondigitalocean.app/api/TrainRoute/{Id}", updatedTrainRoute);
 
             if (response.IsSuccessStatusCode)
             {
