@@ -1,8 +1,6 @@
 using Neo4jClient;
 using System.Text;
 using System.Text.Json;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 using API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,44 +24,7 @@ builder.Services.AddSingleton<IGraphClient>(provider =>
     return client;
 });
 
-builder.Services.AddSingleton<IMessageService<Message>, RabbitMQMessageService<Message>>(provider => 
-{
-    var factory = new ConnectionFactory
-    {
-        UserName = "guest",
-        Password = "guest",
-        VirtualHost = "/",
-        HostName = "rabbitmq",
-        Port = 5672,
-    };
-
-    var connection = factory.CreateConnection();
-    var channel = connection.CreateModel();
-
-    return new RabbitMQMessageService<Message>(channel);
-});
-
 builder.Services.AddHttpClient();
-
-builder.Services.AddSingleton<RabbitMQConsumer>(provider =>
-{
-    var factory = new ConnectionFactory
-    {
-        UserName = "guest",
-        Password = "guest",
-        VirtualHost = "/",
-        HostName = "rabbitmq",
-        Port = 5672,
-    };
-
-    var connection = factory.CreateConnection();
-    var channel = connection.CreateModel();
-
-    var httpClient = provider.GetRequiredService<HttpClient>();
-    var graphClient = provider.GetRequiredService<IGraphClient>();
-
-    return new RabbitMQConsumer(channel, httpClient, graphClient);
-});
 
 builder.Services.AddSingleton<TouristGuideService>(provider =>
 {

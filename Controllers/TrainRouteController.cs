@@ -12,17 +12,14 @@ namespace API.Controllers
     {
         private readonly IGraphClient _client;
         private readonly IMemoryCache _cache;
-        private readonly IMessageService<Message> _messageService;
 
         public TrainRouteController(
             IGraphClient client,
             IMemoryCache cache,
-            IMessageService<Message> messageService
         )
         {
             _client = client;
             _cache = cache;
-            _messageService = messageService;
         }
 
         [HttpGet]
@@ -161,7 +158,6 @@ namespace API.Controllers
             var firstCity = trainRouteData.city_ids.First();
             var lastCity = trainRouteData.city_ids.Last();
             _cache.Remove($"ShortestPath_{firstCity}_{lastCity}");
-            await _messageService.SendMessageAsync(new Message(firstCity, lastCity), "line_queue");
         }
 
         private List<int> ParseCityIds(string cityIds) =>
