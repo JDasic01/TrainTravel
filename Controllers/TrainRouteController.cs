@@ -15,7 +15,7 @@ namespace API.Controllers
 
         public TrainRouteController(
             IGraphClient client,
-            IMemoryCache cache,
+            IMemoryCache cache
         )
         {
             _client = client;
