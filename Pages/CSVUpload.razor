@@ -75,7 +75,7 @@ else
         try
         {
             cities = await HttpClient.GetFromJsonAsync<City?[]>("/City");
-            lines = await HttpClient.GetFromJsonAsync<Line?[]>("Line");
+            lines = await HttpClient.GetFromJsonAsync<Line?[]>("/Line");
             routes = await HttpClient.GetFromJsonAsync<TrainRoute?[]>("/TrainRoute");
         }
         catch(Exception ex)
