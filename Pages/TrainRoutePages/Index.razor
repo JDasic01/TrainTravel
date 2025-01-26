@@ -11,6 +11,16 @@
 
 <a class="btn btn-primary" href="/train-routes/add" role="button">New route</a>
 
+@if(isLoading)
+{
+    <p>Loading...</p>
+}
+else if(!string.IsNullOrEmpty(errorMessage))
+{
+    <p>@errorMessage</p>
+}
+else
+{
 <table class="table">
     <thead>
         <tr>
@@ -44,17 +54,32 @@
         }
     </tbody>
 </table>
-
+}
 @code {
+    private bool isLoading = true;
+    private string errorMessage = "";
     private TrainRoute[] trainRoutes = new TrainRoute[0];
     private City[] cities = new City[0];
     private Line[] lines = new Line[0];
 
     protected override async Task OnInitializedAsync()
     {
-        trainRoutes = await HttpClient.GetFromJsonAsync<TrainRoute[]>("/TrainRoute");
-        cities = await HttpClient.GetFromJsonAsync<City[]>("/City");
-        lines = await HttpClient.GetFromJsonAsync<Line[]>("/Line");
+        try
+        {
+            trainRoutes = await HttpClient.GetFromJsonAsync<TrainRoute[]>("/TrainRoute");
+            cities = await HttpClient.GetFromJsonAsync<City[]>("/City");
+            lines = await HttpClient.GetFromJsonAsync<Line[]>("/Line");
+            isLoading = false;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to load data. Please try again later.";
+            Console.Error.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private async Task DeleteData(int id)

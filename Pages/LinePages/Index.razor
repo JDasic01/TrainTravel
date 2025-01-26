@@ -10,7 +10,16 @@
 <h1>Lines</h1>
 
 <a class="btn btn-primary" href="/lines/add" role="button">New line</a>
-
+@if(isLoading)
+{
+    <p>Loading...</p>
+}
+else if(!string.IsNullOrEmpty(errorMessage))
+{
+    <p>@errorMessage</p>
+}
+else
+{
 <table class="table">
     <thead>
         <tr>
@@ -34,13 +43,27 @@
         }
     </tbody>
 </table>
-
+}
 @code {
+    private bool isLoading = true;
+    private string errorMessage = "";
     private Line[] lines = new Line[0];
 
     protected override async Task OnInitializedAsync()
     {
-        lines = await HttpClient.GetFromJsonAsync<Line[]>("/Line");
+        try
+        {
+            lines = await HttpClient.GetFromJsonAsync<Line[]>("/Line");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to load data. Please try again later.";
+            Console.Error.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private async Task DeleteData(int id)

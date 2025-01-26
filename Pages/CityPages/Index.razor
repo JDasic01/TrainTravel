@@ -8,7 +8,16 @@
 <PageTitle>Cities</PageTitle>
 
 <h1>Cities</h1>
-
+@if(isLoading)
+{
+    <p>Loading...</p>
+}
+else if(!string.IsNullOrEmpty(errorMessage))
+{
+    <p>@errorMessage</p>
+}
+else
+{
 <a class="btn btn-primary" href="/cities/add" role="button">New city</a>
 
     <table class="table">
@@ -33,19 +42,28 @@
         </tbody>
     </table>
 
-    
+}
 
 @code {
+    private bool isLoading = true;
+    private string errorMessage = "";
     private GetCity[] cities = new GetCity[0];
 
     protected override async Task OnInitializedAsync()
     {
-        cities = await HttpClient.GetFromJsonAsync<GetCity?[]>("/City");
-        foreach(var city in cities)
+        try
         {
-            Console.WriteLine(city.city_id);
-            Console.WriteLine(city.availableRoutes);
-            Console.WriteLine(city.city_name);
+            cities = await HttpClient.GetFromJsonAsync<GetCity?[]>("/City");
+            isLoading = false;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to load data. Please try again later.";
+            Console.Error.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 

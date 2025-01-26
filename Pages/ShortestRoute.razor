@@ -9,7 +9,16 @@
 
 <h1>City Graph</h1>
 
-
+@if(isLoading)
+{
+    <p>Loading...</p>
+}
+else if(!string.IsNullOrEmpty(errorMessage))
+{
+    <p>@errorMessage</p>
+}
+else
+{
 <form method="post" onsubmit="@OnSubmit">
     <fieldset>
         <legend>Find shortest path</legend>
@@ -49,10 +58,12 @@
     @string.Join(" -> ", nodes.Where(node => node?.Properties?.city_name != null).Select(node =>
             node.Properties.city_name))
 </h3>
-<hr3>Total mileage: @mileage km</hr3>
-
+<h3>Total mileage: @mileage km</h3>
+}
 
 @code {
+    private bool isLoading = true;
+    private string errorMessage = "";
     string json;
     private Root root = new Root();
 
@@ -71,7 +82,19 @@
 
     protected override async Task OnInitializedAsync()
     {
-        cities = await HttpClient.GetFromJsonAsync<City?[]>("/city");
+        try
+        {
+            cities = await HttpClient.GetFromJsonAsync<City?[]>("/city");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to load data. Please try again later.";
+            Console.Error.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private async Task OnSubmit()
