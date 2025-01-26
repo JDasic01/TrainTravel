@@ -1,0 +1,125 @@
+﻿@page "/find-shortest-path"
+
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using System.Collections.Generic;
+@using Blazor.Data;
+
+<PageTitle>City Graph</PageTitle>
+
+<h1>City Graph</h1>
+
+@if(isLoading)
+{
+    <p>Loading...</p>
+}
+else if(!string.IsNullOrEmpty(errorMessage))
+{
+    <p>@errorMessage</p>
+}
+else
+{
+<form method="post" onsubmit="@OnSubmit">
+    <fieldset>
+        <legend>Find shortest path</legend>
+        <div>
+            <label for="CityId1">Select start city:</label>
+            <select @bind="selectedCityId1">
+                <option value="none" selected disabled hidden>Select an Option</option>
+                @foreach (var city in cities)
+                {
+                    <option value="@city.city_id">@city.city_name ID: @city.city_id</option>
+                }
+            </select>
+
+            <label for="CityId2">Select end city:</label>
+            <select @bind="selectedCityId2">
+                <option value="none" selected disabled hidden>Select an Option</option>
+                @foreach (var city in cities)
+                {
+                    <option value="@city.city_id">@city.city_name ID: @city.city_id</option>
+                }
+            </select>
+
+            <div>
+                <label>&nbsp;</label>
+                <input type="submit" value="Submit" />
+                <p role="status">Status: @selectStatus</p>
+            </div>
+        </div>
+    </fieldset>
+</form>
+<br />
+
+<h2>Start city: @start_city.city_name</h2>
+<h2>End city: @end_prop.city_name</h2>
+<br />
+<h3>
+    @string.Join(" -> ", nodes.Where(node => node?.Properties?.city_name != null).Select(node =>
+            node.Properties.city_name))
+</h3>
+<h3>Total mileage: @mileage km</h3>
+}
+
+@code {
+    private bool isLoading = true;
+    private string errorMessage = "";
+    string json;
+    private Root root = new Root();
+
+    private List<Node> nodes = new List<Node>();
+    private City[] cities = new City[0];
+
+    private Properties start_city = new Properties();
+    private Node end_city = new Node();
+    private string selectStatus = "";
+
+    private Properties end_prop = new Properties();
+
+    private int selectedCityId1;
+    private int selectedCityId2;
+    private int mileage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            cities = await HttpClient.GetFromJsonAsync<City?[]>("/city");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to load data. Please try again later.";
+            Console.Error.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        if (selectedCityId1 != null && selectedCityId2 != null && selectedCityId1 != selectedCityId2)
+        {
+            selectStatus = "Cities are selected!";
+            try
+            {
+                root = await
+                HttpClient.GetFromJsonAsync<Root>($"/find-shortest-path?startCityId={selectedCityId1.ToString()}&endCityId={selectedCityId2.ToString()}");
+                start_city = root.Start.Properties;
+                end_city = root.End;
+                end_prop = end_city.Properties;
+                nodes = root.Nodes;
+                mileage = root.Relationships.Sum(x => x.Properties.mileage);
+            }
+            catch (Exception ex)
+            {
+                selectStatus = $"No path between cities!\n{ex.Message}";
+            }
+        }
+        else
+        {
+            selectStatus = "Both cities need to be selected and different!";
+        }
+    }
+}

@@ -1,0 +1,75 @@
+﻿@page "/cities/update/{id}"
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using Blazor.Data;
+@inject NavigationManager Navigation
+
+<PageTitle>Update City</PageTitle>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <a class="btn btn-primary" href="/cities" role="button">Return</a>
+
+    <form method="post" onsubmit="@OnSubmit">
+        <fieldset>
+            <legend>Update city @InputName</legend>
+            <div class="form-group">
+                <label for="Name">City Name:</label>
+                <input type="text" @bind="city.city_name" />
+            </div>
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <input type="submit" value="Update" />
+            </div>
+        </fieldset>
+    </form>
+
+    <p role="status">Status: @updateCityStatus</p>
+}
+
+@code {
+    private bool isLoading = true;
+    private string InputName;
+    private bool CanUpdateCity => !string.IsNullOrEmpty(city.city_name) && InputName != city.city_name;
+
+    [Parameter]
+    public string id { get; set; }
+    private GetCity city = new GetCity();
+    private City update_city = new City();
+    private string updateCityStatus = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        city = await HttpClient.GetFromJsonAsync<GetCity?>($"/City/{id}");
+        InputName = city.city_name;
+        isLoading = false;
+    }
+
+    private async Task OnSubmit()
+    {
+        if (CanUpdateCity)
+        {
+            update_city.city_id = city.city_id;
+            update_city.city_name = city.city_name;
+
+            var response = await HttpClient.PutAsJsonAsync($"/City/{id}", update_city);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/cities");
+            }
+            else
+            {
+                updateCityStatus = "Failed to update city. Please try again.";
+            }
+        }
+        else
+        {
+            updateCityStatus = "Please change the city name.";
+        }
+    }
+}

@@ -1,0 +1,67 @@
+﻿@page "/cities/add"
+@inject HttpClient HttpClient
+@using System.Net.Http.Json;
+@using Blazor.Data;
+@inject NavigationManager Navigation
+
+<PageTitle>Create City</PageTitle>
+
+<h1>Create City</h1>
+
+<a class="btn btn-primary" href="/cities" role="button">Return</a>
+
+<form method="post" onsubmit="@OnSubmit">
+    <fieldset>
+        <legend>Add City</legend>
+        <div class="form-group">
+            <label for="InputName">City Name:</label>
+            <input class="form-control" type="text" @bind="InputName" />
+        </div>
+        <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn btn-primary" disabled="@(!CanCreateCity)">Submit</button>
+        </div>
+    </fieldset>
+</form>
+
+<p role="status">Status: @createCityStatus</p>
+
+@code {
+    private bool CanCreateCity => !string.IsNullOrWhiteSpace(InputName);
+
+    private City[] cities = new City[0];
+    private City newCity = new City();
+    private string createCityStatus = "";
+
+    private string? InputName { get; set; }
+
+    private async Task OnSubmit()
+    {
+        if (CanCreateCity)
+        {
+            newCity.city_id = generateId();
+            newCity.city_name = InputName;
+
+            var response = await HttpClient.PostAsJsonAsync("/City", newCity);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/cities");
+            }
+            else
+            {
+                createCityStatus = "Failed to create city. Please try again.";
+            }
+        }
+        else
+        {
+            createCityStatus = "Please write the city name!";
+        }
+    }
+
+    private static int id = 100;
+    static int generateId()
+    {
+        return id++;
+    }
+}
