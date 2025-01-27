@@ -84,7 +84,7 @@ else
     {
         try
         {
-            cities = await HttpClient.GetFromJsonAsync<City?[]>("/city");
+            cities = await HttpClient.GetFromJsonAsync<City?[]>("https://dolphin-app-df2gw.ondigitalocean.app/api/city");
         }
         catch (Exception ex)
         {
